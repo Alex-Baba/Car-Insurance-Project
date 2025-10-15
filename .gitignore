@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+.Python
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# vscode
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Secrets / env
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# SQLite
+*.db
+*.sqlite3
+
+# Flask instance folder
+instance/
+
+# mypy
+.mypy_cache/
+
+# celery
+celerybeat-schedule
+
+# local project files
+*.sqlite
+
+# coverage
+coverage*
+
+# Ignore requirements file backups
+requirements.txt~
