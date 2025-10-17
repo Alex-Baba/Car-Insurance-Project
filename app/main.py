@@ -7,6 +7,7 @@ from app.db.base import datab as db
 from app.api.routers.health import health_bp
 from app.api.routers.cars import bp as cars_bp
 from app.api.routers.claims import bp as claims_bp
+from app.api.routers.owner import owner_bp
 
 
 def create_app(db_url=None):
@@ -30,6 +31,7 @@ def create_app(db_url=None):
 
     api.register_blueprint(health_bp)
     api.register_blueprint(cars_bp)
+    api.register_blueprint(owner_bp)
     api.register_blueprint(claims_bp)
 
     return app

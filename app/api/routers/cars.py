@@ -5,13 +5,13 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.models import Car
 from app.api.schemas import CarSchema
+from app.api.schemas import CarInputSchema
 from app.api.schemas import deleteCarSchema
-
-
 
 from app.db.base import datab as db
 
-bp = Blueprint('cars', __name__)
+
+bp = Blueprint('cars', __name__, url_prefix='/api/cars')
 
 @bp.route('/')
 class CarsResource(MethodView):
@@ -28,7 +28,9 @@ class CarsResource(MethodView):
         db.session.commit()
         return {"message": "Car deleted"}
 
-    @bp.arguments(CarSchema)
+
+    #trebuie sa verifici daca ai ownerul respectiv in db
+    @bp.arguments(CarInputSchema)
     @bp.response(201, CarSchema)
     def post(self, car_data):
         new_car=Car(**car_data)
