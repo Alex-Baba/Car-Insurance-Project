@@ -5,10 +5,13 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.models import Car
 from app.api.schemas import CarSchema
+from app.api.schemas import deleteCarSchema
+
+
 
 from app.db.base import datab as db
 
-bp = Blueprint('cars', __name__, url_prefix='/api/cars')
+bp = Blueprint('cars', __name__)
 
 @bp.route('/')
 class CarsResource(MethodView):
@@ -16,6 +19,14 @@ class CarsResource(MethodView):
     def get(self):
         cars = Car.query.all()
         return cars
+
+    @bp.arguments(deleteCarSchema)
+    def delete(self,args):
+        car_id = args['id']
+        car = Car.query.get_or_404(car_id)
+        db.session.delete(car)
+        db.session.commit()
+        return {"message": "Car deleted"}
 
     @bp.arguments(CarSchema)
     @bp.response(201, CarSchema)

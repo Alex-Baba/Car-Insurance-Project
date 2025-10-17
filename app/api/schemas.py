@@ -14,3 +14,5 @@ class CarSchema(Schema):
     model = fields.Str(required=True)
     year_of_manufacture = fields.Int(required=True)
 
+class deleteCarSchema(Schema):
+    id = fields.Int(required=True)
