@@ -12,5 +12,5 @@ class CarSchema(Schema):
     vin = fields.Str(required=True)
     make = fields.Str(required=True)
     model = fields.Str(required=True)
-    yearOfManufacture = fields.Int(required=True)
+    year_of_manufacture = fields.Int(required=True)
 
