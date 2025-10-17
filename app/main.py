@@ -2,11 +2,11 @@ from flask import Flask
 from flask_smorest import Api
 import os
 
-from db.base import datab as db
+from app.db.base import datab as db
 
-from api.routers.health import health_bp
-from api.routers.cars import bp as cars_bp
-from api.routers.claims import bp as claims_bp
+from app.api.routers.health import health_bp
+from app.api.routers.cars import bp as cars_bp
+from app.api.routers.claims import bp as claims_bp
 
 
 def create_app(db_url=None):
@@ -20,7 +20,7 @@ def create_app(db_url=None):
     app.config['OPENAPI_URL_PREFIX'] = '/'
     app.config['OPENAPI_SWAGGER_UI_PATH'] = '/swagger-ui'
     app.config['OPENAPI_SWAGGER_UI_URL'] = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist/'
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL','sqlite:///data.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url or os.getenv('DATABASE_URL','sqlite:///data.db')
     db.init_app(app)
 
     api = Api(app) # initialise the API with the app

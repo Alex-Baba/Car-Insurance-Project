@@ -1,4 +1,4 @@
-
+from app.db.base import datab as db
 
 class Owner(db.Model):
     __tablename__ = 'owner'
