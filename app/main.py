@@ -1,64 +1,35 @@
-from flask import Flask, jsonify, request
-from app.api.routers.health import health_bp
-from app.api.routers.cars import bp as cars_bp
-from app.api.routers.claims import bp as claims_bp
-from app.api.routers.history import bp as history_bp
-from app.api.routers.policies import bp as policies_bp
+from flask import Flask
+from flask_smorest import Api
+import os
 
-app = Flask(__name__)
+from db.base import datab as db
 
-app.register_blueprint(health_bp)
-app.register_blueprint(cars_bp)
-app.register_blueprint(claims_bp)
-app.register_blueprint(history_bp)
-app.register_blueprint(policies_bp)
-
-stores=[
-    {'name': 'api',
-     'cars': [ 
-         {
-            "id":1,
-            "vin":"WVWZZZ1JZXW000001",
-            "make":"VW",
-            "model":"Golf",
-            "yearOfManufacture":2018,
-            "owner":{
-                "id":7,
-                "name":"Alice",
-                "email":"alice@example.com"
-            },
-            "policies": [{
-                    "policyId": 1,
-                    "startDate": "2023-01-01",
-                    "endDate": "2024-01-01",
-                    "provider": "Insurance Co A"
-                }
-            ],
-            "claims": [
-                {
-                    "claimId": 1,
-                    "claimDate": "2023-06-15",
-                    "amount": 1500.00,
-                    "description": "Rear-end collision"
-                }
-            ]
-
-         },
-         {
-            "id":2,
-            "vin":"WVWZZZ1JZXW000002",
-            "make":"VW",
-            "model":"Golf",
-            "yearOfManufacture":2018,
-            "owner":{
-                "id":7,
-                "name":"Alice",
-                "email":"alice@example.com"
-            }
-         }
-     ]}
-]
+from api.routers.health import health_bp
+from api.routers.cars import bp as cars_bp
+from api.routers.claims import bp as claims_bp
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+def create_app(db_url=None):
+   
+    app = Flask(__name__)
+
+    app.config['PROPAGATE_EXCEPTIONS'] = True
+    app.config['API_TITLE'] = 'Cars Insurance API'
+    app.config['API_VERSION'] = 'v1'
+    app.config['OPENAPI_VERSION'] = '3.0.3'
+    app.config['OPENAPI_URL_PREFIX'] = '/'
+    app.config['OPENAPI_SWAGGER_UI_PATH'] = '/swagger-ui'
+    app.config['OPENAPI_SWAGGER_UI_URL'] = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist/'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL','sqlite:///data.db')
+    db.init_app(app)
+
+    api = Api(app) # initialise the API with the app
+
+    with app.app_context():
+        db.create_all()  # create tables for our models
+
+    api.register_blueprint(health_bp)
+    api.register_blueprint(cars_bp)
+    api.register_blueprint(claims_bp)
+
+    return app

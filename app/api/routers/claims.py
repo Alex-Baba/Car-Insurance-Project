@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, request
+from flask import jsonify, request
+from flask_smorest import Blueprint
 
 bp = Blueprint('claims', __name__, url_prefix='/api/cars/<int:car_id>/claims')
 

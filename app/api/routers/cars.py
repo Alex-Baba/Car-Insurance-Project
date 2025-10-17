@@ -1,13 +1,13 @@
-from flask import Flask, jsonify, request, Blueprint
+from flask import Flask, jsonify, request
+from flask_smorest import Blueprint
 from flask.views import MethodView
 
-bp=Blueprint('cars', __name__,description="Cars related operations")
+from api.schemas import CarSchema
 
+bp=Blueprint('cars', __name__)
 
-bp.route('/api/cars')
+@bp.route('/api/cars')
 class Car(MethodView):
-    def get(self,name):
-        for store in stores:
-            if store['name'] == name:
-                return jsonify(store), 200
-        return jsonify({'message': 'car not found'}), 404
+    @bp.response(200, CarSchema(many=True))
+    def get(self):
+        return Cars.values()

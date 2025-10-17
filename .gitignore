@@ -57,6 +57,7 @@ Desktop.ini
 # Secrets / env
 .env
 .env.*
+.flaskenv
 
 # Logs
 *.log
@@ -82,4 +83,4 @@ celerybeat-schedule
 coverage*
 
 # Ignore requirements file backups
-requirements.txt~
+requirements.txt
