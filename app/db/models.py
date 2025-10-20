@@ -10,7 +10,7 @@ class Owner(db.Model):
     cars = db.relationship('Car', back_populates='owner', lazy=True, cascade="all, delete-orphan")
 
 class Car(db.Model):
-    __tablename__ = 'car'
+    __tablename__ = 'cars'
 
     id = db.Column(db.Integer, primary_key=True)
     vin = db.Column(db.String(), unique=True, nullable=False)
