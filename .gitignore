@@ -84,3 +84,7 @@ coverage*
 
 # Ignore requirements file backups
 requirements.txt
+
+# Migration cache/bytecode
+migrations/__pycache__/
+migrations/versions/__pycache__/
