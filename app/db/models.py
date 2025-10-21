@@ -23,6 +23,8 @@ class Car(db.Model):
     
     insurance_policies = db.relationship('InsurancePolicy', back_populates='car', lazy=True, cascade="all, delete-orphan")  
 
+    claims = db.relationship('Claims', back_populates='car', lazy=True, cascade="all, delete-orphan")
+
 class InsurancePolicy(db.Model):
     __tablename__ = 'insurance_policies'
 
@@ -33,3 +35,15 @@ class InsurancePolicy(db.Model):
 
     car_id = db.Column(db.Integer(), db.ForeignKey('cars.id'), nullable=False)
     car = db.relationship('Car', back_populates='insurance_policies', lazy='selectin')
+
+class Claims(db.Model):
+    __tablename__ = 'claims'
+
+    id = db.Column(db.Integer, primary_key=True)
+    claim_date = db.Column(db.Date(), nullable=False)
+    description = db.Column(db.String(), nullable=False)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    created_at = db.Column(db.DateTime(), server_default=db.func.now(), nullable=False)
+
+    car_id = db.Column(db.Integer(), db.ForeignKey('cars.id'), nullable=False)
+    car = db.relationship('Car', lazy='selectin')

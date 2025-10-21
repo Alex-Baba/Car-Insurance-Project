@@ -7,9 +7,9 @@ from flask_migrate import Migrate
 
 from app.api.routers.health import health_bp
 from app.api.routers.cars import bp as cars_bp
-from app.api.routers.claims import bp as claims_bp
 from app.api.routers.owner import owner_bp
 from app.api.routers.policies import policies_bp
+from app.api.routers.claims import claims_bp
 
 
 def create_app(db_url=None):
@@ -28,14 +28,14 @@ def create_app(db_url=None):
     migrate = Migrate(app, db)
     api = Api(app) # initialise the API with the app
 
-    with app.app_context():
-        db.create_all()  # create tables for our models
+    #with app.app_context():
+    #    db.create_all()  # create tables for our models
 
     api.register_blueprint(health_bp)
     api.register_blueprint(cars_bp)
     api.register_blueprint(owner_bp)
-    api.register_blueprint(claims_bp)
     api.register_blueprint(policies_bp)
+    api.register_blueprint(claims_bp)
 
 
     return app
