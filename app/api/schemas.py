@@ -52,3 +52,8 @@ class HistorySchema(Schema):
     policies = fields.List(fields.Nested(InsurancePolicySchema))
     claims = fields.List(fields.Nested(ClaimsSchema))
 
+class InsuranceValiditySchema(Schema):
+    carId = fields.Int(required=True)
+    date = fields.Date(required=True)
+    valid = fields.Bool(required=True)
+
