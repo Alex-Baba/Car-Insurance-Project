@@ -1,12 +1,15 @@
-from flask import Blueprint, jsonify, request
+from app.db.base import datab as db
+from app.api.schemas import HistorySchema
+from app.db.models import InsurancePolicy, Claims
+from flask.views import MethodView
+from flask_smorest import Blueprint
 
-bp = Blueprint('history', __name__, url_prefix='/api/cars/<int:car_id>/history')
+history_bp = Blueprint('history', __name__, url_prefix='/api/history')
 
-@bp.get('/')  # http://127.0.0.1:5000/api/cars/<car_id>/history
-def get_history(car_id):
-    for store in stores:
-        if store['name'] == 'api':
-            for car in store['cars']:
-                if car['id'] == car_id:
-                    return jsonify(car['policies'], car['claims']), 200
-    return jsonify({'message': 'car not found'}), 404
+@history_bp.route('/')
+class HistoryResource(MethodView):
+    @history_bp.response(200, HistorySchema)
+    def get(self):
+        policies = InsurancePolicy.query.all()
+        claims = Claims.query.all()
+        return {"policies": policies, "claims": claims}

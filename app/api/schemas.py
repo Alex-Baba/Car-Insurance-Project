@@ -1,5 +1,5 @@
+from marshmallow import Schema, fields
 from marshmallow import fields
-from marshmallow import Schema
 
 
 class OwnerSchema(Schema):
@@ -24,7 +24,6 @@ class ClaimsSchema(Schema):
 
     car_id = fields.Int(required=True)
 
-#trebuie sa faci schema separate pentru update sau post urgent
 class CarSchema(Schema):
     id = fields.Int(dump_only=True)
     vin = fields.Str(required=True)
@@ -33,7 +32,6 @@ class CarSchema(Schema):
     year_of_manufacture = fields.Int(required=True)
 
     owner = fields.Nested(OwnerSchema, required=True, allow_none=True)
-    #insurance_policies = fields.Nested(InsurancePolicySchema, required=True, allow_none=True)
     insurance_policies = fields.List(fields.Nested(InsurancePolicySchema), dump_only=True, attribute="insurance_policies")
     claims = fields.List(fields.Nested(ClaimsSchema), dump_only=True, attribute="claims")
 
@@ -49,4 +47,8 @@ class CarInputSchema(Schema):
 
 class deleteCarSchema(Schema):
     id = fields.Int(required=True)
+
+class HistorySchema(Schema):
+    policies = fields.List(fields.Nested(InsurancePolicySchema))
+    claims = fields.List(fields.Nested(ClaimsSchema))
 

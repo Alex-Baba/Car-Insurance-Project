@@ -10,6 +10,7 @@ from app.api.routers.cars import bp as cars_bp
 from app.api.routers.owner import owner_bp
 from app.api.routers.policies import policies_bp
 from app.api.routers.claims import claims_bp
+from app.api.routers.history import history_bp
 
 
 def create_app(db_url=None):
@@ -36,6 +37,7 @@ def create_app(db_url=None):
     api.register_blueprint(owner_bp)
     api.register_blueprint(policies_bp)
     api.register_blueprint(claims_bp)
+    api.register_blueprint(history_bp)
 
 
     return app
