@@ -20,3 +20,16 @@ class Car(db.Model):
 
     owner_id = db.Column(db.Integer(), db.ForeignKey('owner.id'), nullable=False)
     owner = db.relationship('Owner', back_populates='cars', lazy=True)
+    
+    insurance_policies = db.relationship('InsurancePolicy', back_populates='car', lazy=True, cascade="all, delete-orphan")  
+
+class InsurancePolicy(db.Model):
+    __tablename__ = 'insurance_policies'
+
+    id = db.Column(db.Integer, primary_key=True)
+    provider = db.Column(db.String(), nullable=False)
+    start_date = db.Column(db.Date(), nullable=True)
+    end_date = db.Column(db.Date(), nullable=True)
+
+    car_id = db.Column(db.Integer(), db.ForeignKey('cars.id'), nullable=False)
+    car = db.relationship('Car', back_populates='insurance_policies', lazy='selectin')
