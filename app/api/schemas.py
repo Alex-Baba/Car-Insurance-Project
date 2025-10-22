@@ -42,7 +42,7 @@ class ClaimsSchema(Schema):
     id = fields.Int(dump_only=True)
     claim_date = ISODateField(required=True)
     description = fields.Str(required=True)
-    amount = fields.Decimal(as_string=True)
+    amount = fields.Decimal(as_string=True, required=True)
     created_at = fields.DateTime(dump_only=True)
     car_id = fields.Int(required=True)
 
@@ -51,11 +51,24 @@ class ClaimsSchema(Schema):
         cd = data.get("claim_date")
         if cd is None:
             return
-        # (ISO format + year range already enforced by ISODateField)
-        # Optional extra rule: disallow future dates
         from datetime import date
         if cd > date.today():
             raise ValidationError({"claim_date": "claim_date cannot be in the future"})
+
+    @validates_schema
+    def validate_amount_and_description(self, data, **_):
+        from decimal import Decimal, InvalidOperation
+        desc = data.get("description")
+        if desc is None or not desc.strip():
+            raise ValidationError({"description": "description must be non-empty"})
+        amt = data.get("amount")
+        if amt is None:
+            raise ValidationError({"amount": "amount is required"})
+        try:
+            if Decimal(amt) <= 0:
+                raise ValidationError({"amount": "amount must be > 0"})
+        except (InvalidOperation, TypeError):
+            raise ValidationError({"amount": "amount must be a valid decimal > 0"})
 
 class InsuranceValiditySchema(Schema):
     carId = fields.Int(required=True)
