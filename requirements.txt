@@ -46,3 +46,4 @@ flask-migrate==4.1.0
 gunicorn==23.0.0
 psycopg2-binary==2.9.11
 structlog==25.4.0
+flask-pydantic==0.13.2

@@ -1,7 +1,11 @@
 from app.db.models import InsurancePolicy, Car
 from app.api.errors import NotFoundError
+from datetime import date
+from app.core.logging import get_logger
 
-def check_insurance(car_id, target_date):
+log = get_logger()
+
+def check_insurance(car_id: int, target_date: date):
     car = Car.query.get(car_id)
     if not car:
         raise NotFoundError("Car not found")
@@ -10,4 +14,11 @@ def check_insurance(car_id, target_date):
         InsurancePolicy.start_date <= target_date,
         InsurancePolicy.end_date >= target_date
     ).first()
-    return bool(policy), policy
+    valid = bool(policy)
+    log.info("insurance.check", car_id=car_id, date=target_date.isoformat(), valid=valid,
+             policy_id=policy.id if policy else None)
+    return {
+        "carId": car_id,
+        "date": target_date,
+        "valid": valid
+    }

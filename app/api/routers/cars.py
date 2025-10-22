@@ -1,10 +1,20 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
-from app.api.schemas import CarSchema, CarInputSchema, DeleteCarSchema
-from app.services.car_service import list_cars, create_car, get_car, delete_car
+from flask_pydantic import validate
+from app.api.schemas import CarSchema, CarCreate, CarUpdate
+from app.services.car_service import list_cars, create_car, get_car, update_car, delete_car
 
 bp = Blueprint('cars', __name__, url_prefix='/api/cars')
-car_bp=Blueprint('car', __name__, url_prefix='/api/car')
+
+def _to_json(c):
+    return {
+        "id": c.id,
+        "vin": c.vin,
+        "make": c.make,
+        "model": c.model,
+        "year_of_manufacture": c.year_of_manufacture,
+        "owner_id": c.owner_id
+    }
 
 @bp.route('/')
 class CarsCollection(MethodView):
@@ -12,10 +22,17 @@ class CarsCollection(MethodView):
     def get(self):
         return list_cars()
 
-    @bp.arguments(CarInputSchema)
+    @validate()
     @bp.response(201, CarSchema)
-    def post(self, data):
-        return create_car(data)
+    def post(self, body: CarCreate):
+        car = create_car(
+            body.vin,
+            body.make,
+            body.model,
+            body.year_of_manufacture,
+            body.owner_id
+        )
+        return car
 
 @bp.route('/<int:car_id>')
 class CarItem(MethodView):
@@ -23,8 +40,19 @@ class CarItem(MethodView):
     def get(self, car_id):
         return get_car(car_id)
 
-    @bp.arguments(DeleteCarSchema)
+    @validate()
+    @bp.response(200, CarSchema)
+    def put(self, car_id, body: CarUpdate):
+        car = update_car(
+            car_id,
+            vin=body.vin,
+            make=body.make,
+            model=body.model,
+            year_of_manufacture=body.year_of_manufacture
+        )
+        return car
+
     @bp.response(204)
-    def delete(self, data, car_id):
+    def delete(self, car_id):
         delete_car(car_id)
         return ""

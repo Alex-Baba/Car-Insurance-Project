@@ -1,20 +1,43 @@
-from app.db.base import datab as db
-from app.db.models import InsurancePolicy, Car
-from app.api.schemas import InsurancePolicySchema
-from app.api.errors import NotFoundError
 from flask.views import MethodView
 from flask_smorest import Blueprint
-from app.services.policies_service import list_policies, create_policy
+from flask_pydantic import validate
+from app.db.models import InsurancePolicy
+from app.api.schemas import PolicyCreate, PolicyUpdate
+from app.services.policies_service import list_policies, create_policy, update_policy, get_policy
 
 policies_bp = Blueprint('policies', __name__, url_prefix='/api/cars/policies')
 
+def _to_json(p: InsurancePolicy):
+    return {
+        "id": p.id,
+        "provider": p.provider,
+        "startDate": p.start_date.isoformat(),
+        "endDate": p.end_date.isoformat(),
+        "carId": p.car_id
+    }
+
 @policies_bp.route('/')
 class InsurancePolicyAPI(MethodView):
-    @policies_bp.response(200, InsurancePolicySchema(many=True))
     def get(self):
-        return list_policies()
+        return [_to_json(p) for p in list_policies()], 200
 
-    @policies_bp.arguments(InsurancePolicySchema)
-    @policies_bp.response(201, InsurancePolicySchema)
-    def post(self, data):
-        return create_policy(data)
+    @validate()
+    def post(self, body: PolicyCreate):
+        p = create_policy(body.provider, body.startDate, body.endDate, body.carId)
+        return _to_json(p), 201
+
+@policies_bp.route('/<int:policy_id>')
+class InsurancePolicyItem(MethodView):
+    def get(self, policy_id: int):
+        p = get_policy(policy_id)
+        return _to_json(p), 200
+
+    @validate()
+    def put(self, policy_id: int, body: PolicyUpdate):
+        p = update_policy(
+            policy_id,
+            provider=body.provider,
+            start_date=body.startDate,
+            end_date=body.endDate
+        )
+        return _to_json(p), 200

@@ -1,4 +1,5 @@
-from marshmallow import ValidationError
+from marshmallow import ValidationError as MarshmallowValidationError
+from pydantic import ValidationError as PydanticValidationError
 from werkzeug.exceptions import HTTPException
 from sqlalchemy.exc import IntegrityError
 
@@ -18,14 +19,26 @@ def _problem_response(status, title, detail=None, errors=None):
         body["errors"] = errors
     return body, status
 
+def _pydantic_errors(e: PydanticValidationError):
+    grouped = {}
+    for err in e.errors():
+        loc = ".".join(str(x) for x in err.get("loc", []))
+        msg = err.get("msg")
+        grouped.setdefault(loc, []).append(msg)
+    return grouped
+
 def register_error_handlers(app):
-    @app.errorhandler(ValidationError)
-    def handle_validation(err):
+    @app.errorhandler(MarshmallowValidationError)
+    def handle_marshmallow(err):
         return _problem_response(422, "Validation Error", errors=err.messages)
+
+    @app.errorhandler(PydanticValidationError)
+    def handle_pydantic(err):
+        return _problem_response(422, "Validation Error", errors=_pydantic_errors(err))
 
     @app.errorhandler(NotFoundError)
     def handle_not_found(err):
-        return _problem_response(404, "Not Found", detail=err.message)
+        return {"detail": err.message}, 404
 
     @app.errorhandler(ConflictError)
     def handle_conflict(err):
@@ -33,7 +46,6 @@ def register_error_handlers(app):
 
     @app.errorhandler(IntegrityError)
     def handle_integrity(err):
-        app.logger.debug("IntegrityError: %s", err)
         return _problem_response(400, "Bad Request", detail="Integrity constraint violated")
 
     @app.errorhandler(HTTPException)
