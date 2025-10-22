@@ -17,23 +17,23 @@ class CarHistoryResource(MethodView):
         policies = InsurancePolicy.query.filter_by(car_id=car_id).all()
         claims = Claims.query.filter_by(car_id=car_id).all()
 
-        entries = []
-        for p in policies:
-            entries.append({
+        entries = [
+            {
                 "type": "POLICY",
                 "policyId": p.id,
                 "startDate": p.start_date,
                 "endDate": p.end_date,
                 "provider": p.provider
-            })
-        for c in claims:
-            entries.append({
+            } for p in policies
+        ] + [
+            {
                 "type": "CLAIM",
                 "claimId": c.id,
                 "claimDate": c.claim_date,
                 "amount": getattr(c, "amount", None),
                 "description": getattr(c, "description", None)
-            })
+            } for c in claims
+        ]
 
         def sort_key(e):
             return e.get("startDate") or e.get("claimDate") or e.get("endDate")

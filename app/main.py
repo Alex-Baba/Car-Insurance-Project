@@ -16,13 +16,14 @@ def create_app(db_url=None):
     app = Flask(__name__)
     cfg = get_config()
     app.config.from_object(cfg)
-    if db_url:  # allow override
+    if db_url:
         app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 
     db.init_app(app)
     Migrate(app, db)
 
     api = Api(app)
+
     api.register_blueprint(health_bp)
     api.register_blueprint(cars_bp)
     api.register_blueprint(owner_bp)
