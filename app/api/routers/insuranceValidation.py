@@ -1,7 +1,6 @@
 from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-from datetime import datetime
 from sqlalchemy import and_
 from app.db.models import InsurancePolicy, Car
 from app.api.schemas import InsuranceValiditySchema
@@ -24,13 +23,14 @@ class InsuranceValidResource(MethodView):
         if not date_str:
             abort(400, message="Missing ?date=YYYY-MM-DD")
 
+        # Use schema to validate/parse the date
+        schema = InsuranceValiditySchema()
         try:
-            d = datetime.strptime(date_str, "%Y-%m-%d").date()
-        except ValueError:
-            abort(400, message="Invalid date format YYYY-MM-DD")
+            parsed = schema.load({"carId": car_id, "date": date_str, "valid": False})
+        except Exception as e:
+            abort(400, message=str(e))
 
-        if d.year < 1900 or d.year > 2100:
-            abort(400, message="Year out of range (1900-2100)")
+        d = parsed["date"]
 
         policy = InsurancePolicy.query.filter(
             and_(
@@ -40,8 +40,5 @@ class InsuranceValidResource(MethodView):
             )
         ).first()
 
-        return {
-            "carId": car_id,
-            "date": d,          # return date object for fields.Date
-            "valid": bool(policy)
-        }
+        parsed["valid"] = bool(policy)
+        return parsed
