@@ -1,9 +1,7 @@
-from app.db.base import datab as db
-from app.db.models import Claims, Car
-from app.api.schemas import ClaimsSchema
-from app.api.errors import NotFoundError
 from flask.views import MethodView
 from flask_smorest import Blueprint
+from app.api.schemas import ClaimsSchema
+from app.services.claim_service import list_claims, create_claim
 
 claims_bp = Blueprint('claims', __name__, url_prefix='/api/claims')
 
@@ -11,15 +9,9 @@ claims_bp = Blueprint('claims', __name__, url_prefix='/api/claims')
 class ClaimsResource(MethodView):
     @claims_bp.response(200, ClaimsSchema(many=True))
     def get(self):
-        return Claims.query.all()
+        return list_claims()
 
     @claims_bp.arguments(ClaimsSchema)
     @claims_bp.response(201, ClaimsSchema)
     def post(self, data):
-        car = Car.query.get(data["car_id"])
-        if not car:
-            raise NotFoundError("Car not found")
-        claim = Claims(**data)
-        db.session.add(claim)
-        db.session.commit()
-        return claim
+        return create_claim(data)

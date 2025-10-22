@@ -1,53 +1,30 @@
-from flask import Flask, jsonify, request
 from flask.views import MethodView
-from flask_smorest import Blueprint, abort
-from sqlalchemy.exc import SQLAlchemyError
-
-from app.db.base import datab as db
-from app.db.models import Car, Owner
+from flask_smorest import Blueprint
 from app.api.schemas import CarSchema, CarInputSchema, DeleteCarSchema
-from app.api.errors import NotFoundError
+from app.services.car_service import list_cars, create_car, get_car, delete_car
 
 bp = Blueprint('cars', __name__, url_prefix='/api/cars')
+car_bp=Blueprint('car', __name__, url_prefix='/api/car')
 
 @bp.route('/')
 class CarsCollection(MethodView):
     @bp.response(200, CarSchema(many=True))
     def get(self):
-        return Car.query.all()
+        return list_cars()
 
     @bp.arguments(CarInputSchema)
     @bp.response(201, CarSchema)
     def post(self, data):
-        owner = Owner.query.get(data["owner_id"])
-        if not owner:
-            raise NotFoundError("Owner not found")
-        car = Car(
-            vin=data["vin"],
-            make=data["make"],
-            model=data["model"],
-            year_of_manufacture=data["year_of_manufacture"],
-            owner_id=data["owner_id"]
-        )
-        db.session.add(car)
-        db.session.commit()
-        return car
+        return create_car(data)
 
 @bp.route('/<int:car_id>')
 class CarItem(MethodView):
     @bp.response(200, CarSchema)
     def get(self, car_id):
-        car = Car.query.get(car_id)
-        if not car:
-            raise NotFoundError("Car not found")
-        return car
+        return get_car(car_id)
 
     @bp.arguments(DeleteCarSchema)
     @bp.response(204)
     def delete(self, data, car_id):
-        car = Car.query.get(car_id)
-        if not car:
-            raise NotFoundError("Car not found")
-        db.session.delete(car)
-        db.session.commit()
+        delete_car(car_id)
         return ""
