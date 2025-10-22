@@ -4,7 +4,6 @@ from flask_smorest import Blueprint
 from flask_pydantic import validate
 from app.api.schemas import ClaimCreate, ClaimsSchema
 from app.services.claim_service import list_claims, create_claim
-from app.db.models import Claims
 
 claims_bp = Blueprint('claims', __name__, url_prefix='/api/claims')
 

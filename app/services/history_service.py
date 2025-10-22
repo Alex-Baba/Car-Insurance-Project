@@ -1,4 +1,4 @@
-from app.db.models import InsurancePolicy, Claims, Car
+from app.db.models import InsurancePolicy, Claim, Car
 from app.api.errors import NotFoundError
 
 def car_history(car_id: int):

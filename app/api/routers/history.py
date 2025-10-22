@@ -1,5 +1,5 @@
 from app.db.base import datab as db
-from app.db.models import InsurancePolicy, Claims, Car
+from app.db.models import InsurancePolicy, Claim, Car
 from app.api.schemas import HistoryEntrySchema
 from app.api.errors import NotFoundError
 from flask.views import MethodView

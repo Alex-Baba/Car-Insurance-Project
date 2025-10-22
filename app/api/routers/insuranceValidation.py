@@ -2,8 +2,7 @@ from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask import request
 from pydantic import ValidationError
-from app.api.schemas import InsuranceValiditySchema
-from app.db.models import InsuranceValidityQuery
+from app.api.schemas import InsuranceValiditySchema,InsuranceValidityQuery
 from app.services.validity_service import check_insurance
 
 insurance_validation_bp = Blueprint('insurance_validation', __name__, url_prefix='/api/cars')
