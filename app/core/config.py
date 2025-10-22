@@ -31,3 +31,14 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+def apply_flask_config(app, settings: Settings):
+    app.config['SECRET_KEY'] = settings.SECRET_KEY
+    app.config['SQLALCHEMY_DATABASE_URI'] = settings.DATABASE_URL
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['API_TITLE'] = settings.API_TITLE
+    app.config['API_VERSION'] = settings.API_VERSION
+    app.config['OPENAPI_VERSION'] = settings.OPENAPI_VERSION
+    app.config['OPENAPI_SWAGGER_UI_PATH'] = '/swagger-ui'
+    app.config['OPENAPI_SWAGGER_UI_URL'] = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist/'
+    app.config['OPENAPI_URL_PREFIX'] = '/' if settings.ENABLE_SWAGGER else None
