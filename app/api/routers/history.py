@@ -1,8 +1,9 @@
 from app.db.base import datab as db
 from app.db.models import InsurancePolicy, Claims, Car
 from app.api.schemas import HistoryEntrySchema
+from app.api.errors import NotFoundError
 from flask.views import MethodView
-from flask_smorest import Blueprint, abort
+from flask_smorest import Blueprint
 
 history_bp = Blueprint('history', __name__, url_prefix='/api/history')
 
@@ -12,7 +13,7 @@ class CarHistoryResource(MethodView):
     def get(self, car_id):
         car = Car.query.get(car_id)
         if not car:
-            abort(404, message="Car not found")
+            raise NotFoundError("Car not found")
 
         policies = InsurancePolicy.query.filter_by(car_id=car_id).all()
         claims = Claims.query.filter_by(car_id=car_id).all()

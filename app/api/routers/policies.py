@@ -1,8 +1,9 @@
 from app.db.base import datab as db
 from app.db.models import InsurancePolicy, Car
 from app.api.schemas import InsurancePolicySchema
+from app.api.errors import NotFoundError
 from flask.views import MethodView
-from flask_smorest import Blueprint, abort
+from flask_smorest import Blueprint
 
 policies_bp = Blueprint('policies', __name__, url_prefix='/api/cars/policies')
 
@@ -17,7 +18,7 @@ class InsurancePolicyAPI(MethodView):
     def post(self, data):
         car = Car.query.get(data["car_id"])
         if not car:
-            abort(404, message="Car not found")
+            raise NotFoundError("Car not found")
         policy = InsurancePolicy(**data)
         db.session.add(policy)
         db.session.commit()

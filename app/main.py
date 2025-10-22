@@ -11,6 +11,7 @@ from app.api.routers.policies import policies_bp
 from app.api.routers.claims import claims_bp
 from app.api.routers.history import history_bp
 from app.api.routers.insuranceValidation import insurance_validation_bp
+from app.api.errors import register_error_handlers
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -22,8 +23,9 @@ def create_app(db_url=None):
     db.init_app(app)
     Migrate(app, db)
 
-    api = Api(app)
+    register_error_handlers(app)
 
+    api = Api(app)
     api.register_blueprint(health_bp)
     api.register_blueprint(cars_bp)
     api.register_blueprint(owner_bp)

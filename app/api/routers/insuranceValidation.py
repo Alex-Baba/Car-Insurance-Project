@@ -1,9 +1,10 @@
-from flask import request
 from flask.views import MethodView
-from flask_smorest import Blueprint, abort
-from sqlalchemy import and_
+from flask_smorest import Blueprint
+from marshmallow import ValidationError
 from app.db.models import InsurancePolicy, Car
 from app.api.schemas import InsuranceValiditySchema
+from app.api.errors import NotFoundError
+from flask import request
 
 insurance_validation_bp = Blueprint(
     'insurance_validation',
@@ -17,27 +18,20 @@ class InsuranceValidResource(MethodView):
     def get(self, car_id):
         car = Car.query.get(car_id)
         if not car:
-            abort(404, message="Car not found")
+            raise NotFoundError("Car not found")
 
         date_str = request.args.get('date')
         if not date_str:
-            abort(400, message="Missing ?date=YYYY-MM-DD")
+            raise ValidationError({"date": ["Missing query parameter 'date'"]})
 
-        # Use schema to validate/parse the date
         schema = InsuranceValiditySchema()
-        try:
-            parsed = schema.load({"carId": car_id, "date": date_str, "valid": False})
-        except Exception as e:
-            abort(400, message=str(e))
+        parsed = schema.load({"carId": car_id, "date": date_str, "valid": False})
 
         d = parsed["date"]
-
         policy = InsurancePolicy.query.filter(
-            and_(
-                InsurancePolicy.car_id == car_id,
-                InsurancePolicy.start_date <= d,
-                InsurancePolicy.end_date >= d
-            )
+            InsurancePolicy.car_id == car_id,
+            InsurancePolicy.start_date <= d,
+            InsurancePolicy.end_date >= d
         ).first()
 
         parsed["valid"] = bool(policy)
