@@ -1,4 +1,3 @@
-from marshmallow import ValidationError as MarshmallowValidationError
 from pydantic import ValidationError as PydanticValidationError
 from werkzeug.exceptions import HTTPException
 from sqlalchemy.exc import IntegrityError
@@ -38,9 +37,6 @@ def _pydantic_errors(e: PydanticValidationError):
     return grouped
 
 def register_error_handlers(app):
-    @app.errorhandler(MarshmallowValidationError)
-    def handle_marshmallow(err):
-        return _problem_response(422, "Validation Error", errors=err.messages)
 
     @app.errorhandler(PydanticValidationError)
     def handle_pydantic(err):
