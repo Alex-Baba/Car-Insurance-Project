@@ -1,8 +1,7 @@
 from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint
-from flask import request
-from app.api.schemas import ClaimCreate, ClaimsSchema, ClaimOut
+from app.api.schemas import ClaimCreate, ClaimOut
 from app.services.claim_service import list_claims, create_claim
 
 def _to_json(c):
@@ -12,11 +11,10 @@ claims_bp = Blueprint('claims', __name__, url_prefix='/api/claims')
 
 @claims_bp.route('/')
 class ClaimsCollection(MethodView):
-    @claims_bp.response(200, ClaimsSchema(many=True))
     def get(self):
-        return list_claims()
+        claims = list_claims()
+        return [ClaimOut.model_validate(c, from_attributes=True).model_dump(by_alias=False) for c in claims], 200
 
-    @claims_bp.response(201, ClaimsSchema)
     def post(self):
         data = request.get_json(force=True, silent=True) or {}
         try:
@@ -27,4 +25,4 @@ class ClaimsCollection(MethodView):
                 return {"status": 422, "title": "Validation Error", "errors": errs}, 422
             return {"status": 400, "title": "Bad Request", "detail": str(e)}, 400
         c = create_claim(body.claimDate, body.description, body.amount, body.carId)
-        return c
+        return ClaimOut.model_validate(c, from_attributes=True).model_dump(by_alias=False), 201

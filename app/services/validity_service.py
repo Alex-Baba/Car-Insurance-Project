@@ -6,7 +6,8 @@ from app.core.logging import get_logger
 log = get_logger()
 
 def check_insurance(car_id: int, target_date: date):
-    car = Car.query.get(car_id)
+    from app.db.base import datab as db
+    car = db.session.get(Car, car_id)
     if not car:
         raise NotFoundError("Car not found")
     policy = InsurancePolicy.query.filter(

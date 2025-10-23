@@ -32,8 +32,8 @@ class Car(db.Model):
     owner_id: Mapped[int] = mapped_column(ForeignKey("owner.id"), nullable=False)
 
     owner: Mapped["Owner"] = relationship(back_populates="cars")
-    insurance_policies: Mapped[List["InsurancePolicy"]] = relationship(back_populates="car")
-    claims: Mapped[List["Claim"]] = relationship(back_populates="car")
+    insurance_policies: Mapped[List["InsurancePolicy"]] = relationship(back_populates="car", cascade="all, delete-orphan")
+    claims: Mapped[List["Claim"]] = relationship(back_populates="car", cascade="all, delete-orphan")
 
 class InsurancePolicy(db.Model):
     __tablename__ = "insurance_policy"

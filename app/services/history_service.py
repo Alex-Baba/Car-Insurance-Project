@@ -1,8 +1,9 @@
 from app.db.models import InsurancePolicy, Claim, Car
+from app.db.base import datab as db
 from app.api.errors import NotFoundError
 
 def car_history(car_id: int):
-    car = Car.query.get(car_id)
+    car = db.session.get(Car, car_id)
     if not car:
         raise NotFoundError("Car not found")
     policies = InsurancePolicy.query.filter_by(car_id=car_id).all()

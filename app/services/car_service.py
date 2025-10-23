@@ -6,7 +6,7 @@ def list_cars():
     return Car.query.all()
 
 def create_car(vin, make, model, year_of_manufacture, owner_id):
-    owner = Owner.query.get(owner_id)
+    owner = db.session.get(Owner, owner_id)
     if not owner:
         raise NotFoundError("Owner not found")
     car = Car(
@@ -21,7 +21,7 @@ def create_car(vin, make, model, year_of_manufacture, owner_id):
     return car
 
 def get_car(car_id):
-    car = Car.query.get(car_id)
+    car = db.session.get(Car, car_id)
     if not car:
         raise NotFoundError("Car not found")
     return car

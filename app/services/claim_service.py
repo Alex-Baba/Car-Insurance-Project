@@ -6,7 +6,7 @@ def list_claims():
     return Claim.query.all()
 
 def create_claim(claim_date, description, amount, car_id):
-    car = Car.query.get(car_id)
+    car = db.session.get(Car, car_id)
     if not car:
         raise NotFoundError("Car not found")
     c = Claim(claim_date=claim_date, description=description, amount=amount, car_id=car_id)
