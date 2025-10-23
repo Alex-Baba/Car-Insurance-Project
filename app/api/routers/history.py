@@ -17,6 +17,12 @@ class CarHistoryResource(MethodView):
         if compact:
             # Compact entries already pruned; return as-is
             return entries, 200
-        # Normal (full) format: validate via pydantic to ensure schema consistency
-        validated = [HistoryEntryOut.model_validate(e).model_dump(by_alias=True) for e in entries]
-        return validated, 200
+        # Normal (full) format: validate via pydantic then prune None keys for cleaner output
+        cleaned = []
+        for e in entries:
+            model = HistoryEntryOut.model_validate(e)
+            dumped = model.model_dump(by_alias=True)
+            # Remove keys whose value is None
+            pruned = {k: v for k, v in dumped.items() if v is not None}
+            cleaned.append(pruned)
+        return cleaned, 200

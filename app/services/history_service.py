@@ -36,20 +36,24 @@ def car_history(car_id: int, compact: bool = False):
         })
     # Sort by real date object, then by type for stable deterministic order (POLICY before CLAIM if same day)
     raw_entries.sort(key=lambda e: (e["_chrono"], e["type"]))
-    # Drop internal key
+    # Drop internal key and post-process entries
+    pruned_entries = []
     for e in raw_entries:
         e.pop("_chrono", None)
         if compact:
             # Drop keys with None values
-            keys_to_drop = [k for k, v in e.items() if v is None]
-            for k in keys_to_drop:
+            for k in [k for k, v in list(e.items()) if v is None]:
                 e.pop(k, None)
-            # If CLAIM, remove policy-specific keys if present
             if e.get("type") == "CLAIM":
                 for k in ("startDate", "endDate", "provider", "policyId"):
                     e.pop(k, None)
-            # If POLICY, remove claim-specific keys if present
             if e.get("type") == "POLICY":
                 for k in ("claimDate", "description", "amount", "claimId"):
                     e.pop(k, None)
-    return raw_entries
+        else:
+            # Full format: still prune None values to avoid noisy nulls
+            for k in [k for k, v in list(e.items()) if v is None]:
+                e.pop(k, None)
+            # Keep both policy and claim specific keys if they exist (no cross-pruning)
+        pruned_entries.append(e)
+    return pruned_entries
