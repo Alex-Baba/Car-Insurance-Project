@@ -6,7 +6,8 @@ def car_history(car_id: int):
     if not car:
         raise NotFoundError("Car not found")
     policies = InsurancePolicy.query.filter_by(car_id=car_id).all()
-    claims = Claims.query.filter_by(car_id=car_id).all()
+    claims = Claim.query.filter_by(car_id=car_id).all()
+    # Return raw date objects; Marshmallow ISODateField will serialize them.
     entries = [
         {
             "type": "POLICY",

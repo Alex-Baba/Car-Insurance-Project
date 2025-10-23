@@ -13,12 +13,10 @@ class InsuranceValidResource(MethodView):
     def get(self, car_id):
         date_str = request.args.get("date")
         if not date_str:
-            raise ValidationError.from_exception_data("date", [{
-                "loc": ("date",),
-                "msg": "Missing query parameter 'date'",
-                "type": "value_error.missing"
-            }])
-        model = InsuranceValidityQuery(carId=car_id, date=date_str)
+            return {"error": "Missing query parameter 'date'", "field": "date"}, 400
+        try:
+            model = InsuranceValidityQuery(carId=car_id, date=date_str)
+        except ValidationError as ve:
+            return {"error": "Invalid date", "details": ve.errors()}, 422
         result = check_insurance(model.carId, model.date)
-        # Marshmallow schema will serialize date
         return result, 200

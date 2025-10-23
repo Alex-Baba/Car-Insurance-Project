@@ -5,6 +5,15 @@ from flask_pydantic import validate
 from app.api.schemas import ClaimCreate, ClaimsSchema
 from app.services.claim_service import list_claims, create_claim
 
+def _to_json(c):
+    return {
+        "id": c.id,
+        "claimDate": c.claim_date.isoformat(),
+        "description": c.description,
+        "amount": str(c.amount),
+        "carId": c.car_id
+    }
+
 claims_bp = Blueprint('claims', __name__, url_prefix='/api/claims')
 
 @claims_bp.route('/')
@@ -16,4 +25,5 @@ class ClaimsCollection(MethodView):
     @validate()
     @claims_bp.response(201, ClaimsSchema)
     def post(self, body: ClaimCreate):
-        return create_claim(body.claimDate, body.description, body.amount, body.carId)
+        c = create_claim(body.claimDate, body.description, body.amount, body.carId)
+        return c

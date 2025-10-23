@@ -45,10 +45,11 @@ class InsurancePolicySchema(Schema):
 
 class ClaimsSchema(Schema):
     id = fields.Int(dump_only=True)
-    claim_date = ISODateField(required=True)
+    # Provide both snake_case and camelCase for compatibility
+    claim_date = ISODateField(required=True, data_key="claimDate")
     description = fields.Str(required=True)
     amount = fields.Decimal(required=True, as_string=True)
-    car_id = fields.Int(required=True)
+    car_id = fields.Int(required=True, data_key="carId")
 
     @validates_schema
     def claim_ok(self, data, **_):
@@ -85,12 +86,13 @@ def _range(d: date):
     return d
 
 class OwnerCreate(BaseModel):
-    model_config = ConfigDict(strict=True)
+    # relax strict to allow basic JSON coercion
+    model_config = ConfigDict(strict=False)
     name: str
     email: str | None = None
 
 class CarCreate(BaseModel):
-    model_config = ConfigDict(strict=True, populate_by_name=True)
+    model_config = ConfigDict(strict=False, populate_by_name=True)
     vin: str
     make: str
     model: str
@@ -98,14 +100,14 @@ class CarCreate(BaseModel):
     owner_id: int
 
 class CarUpdate(BaseModel):
-    model_config = ConfigDict(strict=True, populate_by_name=True)
+    model_config = ConfigDict(strict=False, populate_by_name=True)
     vin: str | None = None
     make: str | None = None
     model: str | None = None
     year_of_manufacture: int | None = None
 
 class PolicyCreate(BaseModel):
-    model_config = ConfigDict(strict=True, populate_by_name=True)
+    model_config = ConfigDict(strict=False, populate_by_name=True)
     provider: str
     startDate: date = Field(alias="start_date")
     endDate: date = Field(alias="end_date")
@@ -123,7 +125,7 @@ class PolicyCreate(BaseModel):
         return v
 
 class PolicyUpdate(BaseModel):
-    model_config = ConfigDict(strict=True, populate_by_name=True)
+    model_config = ConfigDict(strict=False, populate_by_name=True)
     provider: str | None = None
     startDate: date | None = Field(default=None, alias="start_date")
     endDate: date | None = Field(default=None, alias="end_date")
@@ -140,7 +142,7 @@ class PolicyUpdate(BaseModel):
         return v
 
 class ClaimCreate(BaseModel):
-    model_config = ConfigDict(strict=True, populate_by_name=True)
+    model_config = ConfigDict(strict=False, populate_by_name=True)
     claimDate: date = Field(alias="claim_date")
     description: str
     amount: condecimal(gt=0)
@@ -157,7 +159,7 @@ class ClaimCreate(BaseModel):
         return v
 
 class InsuranceValidityQuery(BaseModel):
-    model_config = ConfigDict(strict=True)
+    model_config = ConfigDict(strict=False)
     carId: int
     date: date
 
