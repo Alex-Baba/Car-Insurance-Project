@@ -2,6 +2,7 @@ from marshmallow import ValidationError as MarshmallowValidationError
 from pydantic import ValidationError as PydanticValidationError
 from werkzeug.exceptions import HTTPException
 from sqlalchemy.exc import IntegrityError
+from pydantic import BaseModel
 
 class NotFoundError(Exception):
     def __init__(self, message="Resource not found"):
@@ -11,6 +12,12 @@ class ConflictError(Exception):
     def __init__(self, message="Conflict"):
         self.message = message
 
+class DomainValidationError(Exception):
+    """Business rule / domain validation error (e.g., endDate < startDate)."""
+    def __init__(self, message: str, field: str | None = None):
+        self.message = message
+        self.field = field
+
 def _problem_response(status, title, detail=None, errors=None):
     body = {"status": status, "title": title}
     if detail:
@@ -18,6 +25,9 @@ def _problem_response(status, title, detail=None, errors=None):
     if errors:
         body["errors"] = errors
     return body, status
+
+def validation_problem(errors: dict, detail: str | None = None, status: int = 422):
+    return _problem_response(status, "Validation Error", detail=detail, errors=errors)
 
 def _pydantic_errors(e: PydanticValidationError):
     grouped = {}
@@ -51,6 +61,16 @@ def register_error_handlers(app):
     @app.errorhandler(HTTPException)
     def handle_http(err: HTTPException):
         return _problem_response(err.code or 500, err.name or "HTTP Error", detail=err.description)
+
+    @app.errorhandler(ValueError)
+    def handle_value_error(err: ValueError):
+        # Treat generic value errors from service validation as 400
+        return _problem_response(400, "Bad Request", detail=str(err))
+
+    @app.errorhandler(DomainValidationError)
+    def handle_domain_validation(err: DomainValidationError):
+        errors = {err.field: [err.message]} if err.field else {"detail": [err.message]}
+        return _problem_response(400, "Domain Validation Error", detail=err.message, errors=errors)
 
     @app.errorhandler(Exception)
     def handle_generic(err):

@@ -1,7 +1,6 @@
 from app.db.base import datab as db
 from app.db.models import InsurancePolicy, Car
-from app.api.errors import NotFoundError
-from pydantic import ValidationError
+from app.api.errors import NotFoundError, DomainValidationError
 
 def list_policies():
     return InsurancePolicy.query.all()
@@ -17,11 +16,7 @@ def create_policy(provider, start_date, end_date, car_id):
     if not car:
         raise NotFoundError("Car not found")
     if end_date < start_date:
-        raise ValidationError.from_exception_data("endDate", [{
-            "loc": ("endDate",),
-            "msg": "endDate must be >= startDate",
-            "type": "value_error"
-        }])
+        raise DomainValidationError("endDate must be >= startDate", field="endDate")
     p = InsurancePolicy(provider=provider, start_date=start_date, end_date=end_date, car_id=car_id)
     db.session.add(p)
     db.session.commit()
@@ -32,11 +27,7 @@ def update_policy(policy_id, provider=None, start_date=None, end_date=None):
     new_start = start_date or p.start_date
     new_end = end_date or p.end_date
     if new_end < new_start:
-        raise ValidationError.from_exception_data("endDate", [{
-            "loc": ("endDate",),
-            "msg": "endDate must be >= startDate",
-            "type": "value_error"
-        }])
+        raise DomainValidationError("endDate must be >= startDate", field="endDate")
     if provider is not None:
         p.provider = provider
     if start_date is not None:

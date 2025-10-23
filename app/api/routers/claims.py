@@ -1,7 +1,7 @@
 from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint
-from flask_pydantic import validate
+from flask import request
 from app.api.schemas import ClaimCreate, ClaimsSchema
 from app.services.claim_service import list_claims, create_claim
 
@@ -22,8 +22,15 @@ class ClaimsCollection(MethodView):
     def get(self):
         return list_claims()
 
-    @validate()
     @claims_bp.response(201, ClaimsSchema)
-    def post(self, body: ClaimCreate):
+    def post(self):
+        data = request.get_json(force=True, silent=True) or {}
+        try:
+            body = ClaimCreate.model_validate(data)
+        except Exception as e:
+            if hasattr(e, "errors"):
+                errs = [{"loc": err.get("loc"), "msg": err.get("msg"), "type": err.get("type")} for err in e.errors()]
+                return {"status": 422, "title": "Validation Error", "errors": errs}, 422
+            return {"status": 400, "title": "Bad Request", "detail": str(e)}, 400
         c = create_claim(body.claimDate, body.description, body.amount, body.carId)
         return c

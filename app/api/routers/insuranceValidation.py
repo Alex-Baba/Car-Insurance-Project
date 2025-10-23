@@ -4,6 +4,7 @@ from flask import request
 from pydantic import ValidationError
 from app.api.schemas import InsuranceValiditySchema,InsuranceValidityQuery
 from app.services.validity_service import check_insurance
+from app.api.errors import DomainValidationError
 
 insurance_validation_bp = Blueprint('insurance_validation', __name__, url_prefix='/api/cars')
 
@@ -13,7 +14,7 @@ class InsuranceValidResource(MethodView):
     def get(self, car_id):
         date_str = request.args.get("date")
         if not date_str:
-            return {"error": "Missing query parameter 'date'", "field": "date"}, 400
+            raise DomainValidationError("Missing query parameter 'date'", field="date")
         try:
             model = InsuranceValidityQuery(carId=car_id, date=date_str)
         except ValidationError as ve:

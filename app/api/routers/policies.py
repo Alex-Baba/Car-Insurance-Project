@@ -1,6 +1,6 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
-from flask_pydantic import validate
+from flask import request
 from app.db.models import InsurancePolicy
 from app.api.schemas import PolicyCreate, PolicyUpdate
 from app.services.policies_service import list_policies, create_policy, update_policy, get_policy
@@ -21,8 +21,15 @@ class InsurancePolicyAPI(MethodView):
     def get(self):
         return [_to_json(p) for p in list_policies()], 200
 
-    @validate()
-    def post(self, body: PolicyCreate):
+    def post(self):
+        data = request.get_json(force=True, silent=True) or {}
+        try:
+            body = PolicyCreate.model_validate(data)
+        except Exception as e:
+            if hasattr(e, "errors"):
+                errs = [{"loc": err.get("loc"), "msg": err.get("msg"), "type": err.get("type")} for err in e.errors()]
+                return {"status": 422, "title": "Validation Error", "errors": errs}, 422
+            return {"status": 400, "title": "Bad Request", "detail": str(e)}, 400
         p = create_policy(body.provider, body.startDate, body.endDate, body.carId)
         return _to_json(p), 201
 
@@ -32,8 +39,15 @@ class InsurancePolicyItem(MethodView):
         p = get_policy(policy_id)
         return _to_json(p), 200
 
-    @validate()
-    def put(self, policy_id: int, body: PolicyUpdate):
+    def put(self, policy_id: int):
+        data = request.get_json(force=True, silent=True) or {}
+        try:
+            body = PolicyUpdate.model_validate(data)
+        except Exception as e:
+            if hasattr(e, "errors"):
+                errs = [{"loc": err.get("loc"), "msg": err.get("msg"), "type": err.get("type")} for err in e.errors()]
+                return {"status": 422, "title": "Validation Error", "errors": errs}, 422
+            return {"status": 400, "title": "Bad Request", "detail": str(e)}, 400
         p = update_policy(
             policy_id,
             provider=body.provider,
