@@ -1,8 +1,3 @@
-"""Cars API endpoints.
-
-Provides CRUD operations for cars. Uses Pydantic models for request validation
-and manual embedding of owner data (relationship) in responses.
-"""
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from pydantic import ValidationError
@@ -10,7 +5,7 @@ from app.api.schemas import CarCreate, CarUpdate, CarOut
 from app.services.car_service import list_cars, create_car, get_car, update_car, delete_car
 from app.api.errors import DomainValidationError
 
-bp = Blueprint('cars', __name__, url_prefix='/api/cars')
+bp = Blueprint('cars', __name__, url_prefix='/api/cars', description='Cars resource: manage vehicles linked to owners; cascade delete related policies and claims.')
 
 @bp.route('/')
 class CarsCollection(MethodView):

@@ -1,7 +1,3 @@
-"""Insurance validity check endpoint.
-
-Determines if a car has an active policy covering a supplied date.
-"""
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask import request
@@ -10,7 +6,7 @@ from app.api.schemas import InsuranceValidityQuery, InsuranceValidityOut
 from app.services.validity_service import check_insurance
 from app.api.errors import DomainValidationError
 
-insurance_validation_bp = Blueprint('insurance_validation', __name__, url_prefix='/api/cars')
+insurance_validation_bp = Blueprint('insurance_validation', __name__, url_prefix='/api/cars', description='Insurance validity: check if a car is insured on a specific date.')
 
 @insurance_validation_bp.route('/<int:car_id>/insurance-valid')
 class InsuranceValidResource(MethodView):

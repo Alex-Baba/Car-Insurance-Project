@@ -8,7 +8,7 @@ from app.api.errors import NotFoundError
 def _to_json(c):
     return ClaimOut.model_validate(c, from_attributes=True).model_dump(by_alias=False)
 
-claims_bp = Blueprint('claims', __name__, url_prefix='/api/claims')
+claims_bp = Blueprint('claims', __name__, url_prefix='/api/claims', description='Claims resource: create, list, retrieve and delete insurance claims associated with cars.')
 
 @claims_bp.route('/')
 class ClaimsCollection(MethodView):

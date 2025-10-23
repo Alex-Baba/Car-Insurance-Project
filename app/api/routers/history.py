@@ -1,13 +1,9 @@
-"""History API endpoint.
-
-Provides unified chronological view of a car's policies and claims.
-"""
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from app.services.history_service import car_history
 from app.api.schemas import HistoryEntryOut
 
-history_bp = Blueprint('history', __name__, url_prefix='/api/history')
+history_bp = Blueprint('history', __name__, url_prefix='/api/history', description='History resource: unified chronological timeline of policies and claims for a car.')
 
 @history_bp.route('/<int:car_id>')
 class CarHistoryResource(MethodView):

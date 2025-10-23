@@ -1,10 +1,3 @@
-"""Owner endpoints: list and create owner records.
-
-This router keeps validation lightweight; complex rules live with cars or policies.
-Pydantic performs structural validation; DomainValidationError surfaces domain-level
-issues distinctly from 500 errors. Responses use OwnerOut with camelCase aliases.
-"""
-
 from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint
@@ -13,7 +6,7 @@ from app.api.schemas import OwnerCreate, OwnerOut
 from app.services.owners_service import list_owners, create_owner
 from app.api.errors import DomainValidationError
 
-owner_bp = Blueprint('owners', __name__, url_prefix='/api/owners')
+owner_bp = Blueprint('owners', __name__, url_prefix='/api/owners', description='Owners resource: list and create owners; future item endpoint will allow retrieval.')
 
 @owner_bp.route('/')
 class OwnersResource(MethodView):

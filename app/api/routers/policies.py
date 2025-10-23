@@ -6,7 +6,7 @@ from app.api.schemas import PolicyCreate, PolicyUpdate, PolicyOut
 from app.services.policies_service import list_policies, create_policy, update_policy, get_policy
 from app.api.errors import ConflictError, DomainValidationError, NotFoundError
 
-policies_bp = Blueprint('policies', __name__, url_prefix='/api')
+policies_bp = Blueprint('policies', __name__, url_prefix='/api', description='Insurance policies: global listing, creation, per-car listing, update and deletion.')
 
 def _to_json(p: InsurancePolicy):
     """Serialize an InsurancePolicy ORM instance to primitive dict via Pydantic model.

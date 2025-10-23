@@ -24,44 +24,6 @@ Stack Highlights:
 - Gunicorn for production WSGI serving
 - Docker / docker-compose for containerized deployment (Postgres)
 
-## Project Structure
-
-```
-app/
-  main.py               # Flask app factory & startup
-  api/
-    routers/            # Blueprints/endpoints
-      cars.py
-      claims.py
-      policies.py
-      history.py
-      health.py
-      owner.py
-      insuranceValidation.py
-    errors.py           # exception handler registrations & error types
-    schemas.py          # Pydantic v2 request/response models
-  core/
-    config.py           # pydantic-settings (env driven)
-    logging.py          # structlog setup
-    scheduling.py       # APScheduler init & jobs
-    request_id.py       # request ID middleware
-  db/
-    base.py             # SQLAlchemy db init (Flask SQLAlchemy wrapper)
-    models.py           # ORM models
-  services/             # Business logic layer
-    car_service.py
-    claim_service.py
-    expiry_service.py
-    history_service.py
-    owners_service.py
-    policies_service.py
-    validity_service.py
-  utils/
-    date.py             # date helpers
-migrations/             # Alembic migration scripts
-tests/                  # Pytest suite
-```
-
 ## Features
 
 - Owners CRUD (create owners, list owners)
@@ -204,6 +166,68 @@ Notes:
 - Location header: Returned on successful creation for addressable resources.
 - Idempotent deletes: Repeated DELETE of a missing resource yields 404 (no silent success masking).
 - Validation first: Domain rules (date ordering, overlap) raise ConflictError or DomainValidationError early.
+
+## OpenAPI & Swagger UI
+
+The API exposes an automatically generated OpenAPI specification via `flask-smorest`.
+
+Endpoints:
+
+| Path | Purpose |
+|------|---------|
+| `/openapi.json` | Raw OpenAPI 3.0.3 document (JSON) |
+| `/swagger-ui` | Interactive Swagger UI (served via CDN) |
+
+Enabled by default (see `ENABLE_SWAGGER` in `app/core/config.py`). To disable documentation in production set:
+
+```powershell
+$env:ENABLE_SWAGGER="false"; flask run
+```
+
+Key configuration values:
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| API_TITLE | Cars Insurance API | Title displayed in Swagger UI |
+| API_VERSION | v1 | API version string |
+| OPENAPI_VERSION | 3.0.3 | OpenAPI spec version |
+| ENABLE_SWAGGER | true | Master switch for exposing spec & UI |
+
+Blueprint descriptions were added to enrich tag descriptions. For richer per-operation details you can:
+
+1. Add docstrings to method handlers describing parameters & responses.
+2. Use `@blp.response` and `@blp.arguments` decorators (migration from manual Pydantic validation) for automatic schema wiring.
+3. Register reusable components (e.g. error schema) and reference with `$ref` in responses.
+
+Example (future enhancement) converting a POST to decorator style:
+
+```python
+@policies_bp.route('/policies')
+class InsurancePolicyCollection(MethodView):
+  @policies_bp.response(201, PolicyOut)  # success
+  @policies_bp.arguments(PolicyCreate)   # request body
+  def post(self, body):
+    p = create_policy(body.provider, body.startDate, body.endDate, body.carId)
+    return PolicyOut.model_validate(p, from_attributes=True)
+```
+
+Exporting spec to a file (optional for CI artifact):
+
+```powershell
+curl http://localhost:8000/openapi.json -o openapi.json
+```
+
+You can bundle it with ReDoc locally:
+
+```powershell
+npx redoc-cli build openapi.json -o docs.html
+```
+
+Planned enhancements:
+- Add operation examples (request/response bodies)
+- Standardize error responses to RFC 7807 (problem+json) component
+- Add pagination query parameters & schemas (`limit`, `offset`, `meta`)
+- Security scheme components once auth is introduced
 
 ## Response Models
 
