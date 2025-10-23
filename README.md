@@ -328,3 +328,276 @@ No auth layer yet; do not expose publicly without adding authentication & rate l
 - For production consider adding a non-root DB migration step in CI/CD.
 - Adjust Gunicorn workers/threads based on CPU and workload.
 - Add a separate Dockerfile.dev for faster iterative development (editable volume, no wheel build) if needed.
+
+## Postman Showcase
+
+Use the following curated examples to demonstrate both successful operations and error handling. Base URL: `http://localhost:8000`.
+
+### Execution Order
+1. Create Owner
+2. Create Car (using ownerId)
+3. Create Policy
+4. Create Overlapping Policy (error 409)
+5. Create Claim
+6. Query History
+7. Insurance Validity (insured + uninsured date)
+8. Error cases (bad dates, missing fields, 404, validation)
+
+### Owners
+Create Owner (201):
+```http
+POST /api/owners
+Content-Type: application/json
+
+{
+  "name": "Alice Driver",
+  "email": "alice@example.com"
+}
+```
+Response (excerpt):
+```json
+{
+  "id": 1,
+  "name": "Alice Driver",
+  "email": "alice@example.com"
+}
+```
+Missing Name (422/400):
+```http
+POST /api/owners
+{
+  "email": "missing@example.com"
+}
+```
+Expected: validation error payload.
+
+### Cars
+Create Car (201):
+```http
+POST /api/cars
+{
+  "vin": "VINPOSTMAN0001",
+  "make": "Ford",
+  "model": "Focus",
+  "yearOfManufacture": 2020,
+  "ownerId": 1
+}
+```
+Get Non-existent Car (404):
+```http
+GET /api/cars/999999
+```
+
+### Policies
+Create Policy (201):
+```http
+POST /api/policies
+{
+  "carId": 1,
+  "provider": "ACME",
+  "startDate": "2025-01-01",
+  "endDate": "2025-06-30"
+}
+```
+Overlap Conflict (409):
+```http
+POST /api/policies
+{
+  "carId": 1,
+  "provider": "OverlapCo",
+  "startDate": "2025-06-01",
+  "endDate": "2025-08-01"
+}
+```
+Bad Dates (endDate < startDate) (400/422):
+```http
+POST /api/policies
+{
+  "carId": 1,
+  "provider": "BadDates",
+  "startDate": "2025-02-10",
+  "endDate": "2025-02-01"
+}
+```
+Non-existent Car (404):
+```http
+POST /api/policies
+{
+  "carId": 999999,
+  "provider": "Ghost",
+  "startDate": "2025-01-01",
+  "endDate": "2025-02-01"
+}
+```
+
+### Claims
+Create Claim (201):
+```http
+POST /api/claims/car/1
+{
+  "description": "Rear bumper dent",
+  "claimDate": "2025-03-10",
+  "amount": 350.00
+}
+```
+Negative Amount (400/422):
+```http
+POST /api/claims/car/1
+{
+  "description": "Invalid amount test",
+  "claimDate": "2025-03-11",
+  "amount": -10
+}
+```
+Non-existent Car (404):
+```http
+POST /api/claims/car/999999
+{
+  "description": "Ghost car",
+  "claimDate": "2025-03-12",
+  "amount": 100
+}
+```
+
+### History
+Get History (200):
+```http
+GET /api/history/1
+```
+Non-existent Car History (404):
+```http
+GET /api/history/999999
+```
+
+### Insurance Validity
+Insured Date (200):
+```http
+GET /api/cars/1/insurance-valid?date=2025-05-05
+```
+Uninsured Date (200):
+```http
+GET /api/cars/1/insurance-valid?date=2026-01-01
+```
+Missing Date Param (400):
+```http
+GET /api/cars/1/insurance-valid
+```
+
+### Deletions
+Delete Policy (204):
+```http
+DELETE /api/policies/<policy_id>
+```
+Delete Claim (204):
+```http
+DELETE /api/claims/<claim_id>
+```
+Cascade Delete Car (204):
+```http
+DELETE /api/cars/1
+```
+Repeat Delete (404):
+```http
+DELETE /api/cars/1
+```
+
+### Typical Error Payloads
+Conflict (409):
+```json
+{
+  "status": 409,
+  "title": "Conflict",
+  "detail": "Policy dates overlap existing policy"
+}
+```
+Validation (422 example):
+```json
+{
+  "status": 422,
+  "title": "Validation Error",
+  "errors": [
+    { "loc": ["endDate"], "msg": "endDate must be >= startDate", "type": "value_error" }
+  ]
+}
+```
+Not Found (404):
+```json
+{
+  "status": 404,
+  "title": "Not Found",
+  "detail": "Car not found"
+}
+```
+
+### Postman Collection Import (Raw JSON Skeleton)
+Import via Postman > Import > Raw Text:
+```json
+{
+  "info": {
+    "name": "Cars Insurance API Showcase",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Owner - Create",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": {"raw": "{{baseUrl}}/api/owners", "host": ["{{baseUrl}}"], "path": ["api","owners"]},
+        "body": {"mode":"raw","raw":"{\n  \"name\": \"Alice Driver\",\n  \"email\": \"alice@example.com\"\n}"}
+      }
+    },
+    {
+      "name": "Car - Create",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": {"raw": "{{baseUrl}}/api/cars", "host": ["{{baseUrl}}"], "path": ["api","cars"]},
+        "body": {"mode":"raw","raw":"{\n  \"vin\": \"VINPOSTMAN0001\",\n  \"make\": \"Ford\",\n  \"model\": \"Focus\",\n  \"yearOfManufacture\": 2020,\n  \"ownerId\": {{ownerId}}\n}"}
+      }
+    },
+    {
+      "name": "Policy - Create",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": {"raw": "{{baseUrl}}/api/policies", "host": ["{{baseUrl}}"], "path": ["api","policies"]},
+        "body": {"mode":"raw","raw":"{\n  \"carId\": {{carId}},\n  \"provider\": \"ACME\",\n  \"startDate\": \"2025-01-01\",\n  \"endDate\": \"2025-06-30\"\n}"}
+      }
+    },
+    {
+      "name": "Policy - Overlap Conflict",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": {"raw": "{{baseUrl}}/api/policies", "host": ["{{baseUrl}}"], "path": ["api","policies"]},
+        "body": {"mode":"raw","raw":"{\n  \"carId\": {{carId}},\n  \"provider\": \"OverlapCo\",\n  \"startDate\": \"2025-06-01\",\n  \"endDate\": \"2025-08-01\"\n}"}
+      }
+    },
+    {
+      "name": "Claim - Create",
+      "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "url": {"raw": "{{baseUrl}}/api/claims/car/{{carId}}", "host": ["{{baseUrl}}"], "path": ["api","claims","car","{{carId}}"]},
+        "body": {"mode":"raw","raw":"{\n  \"description\": \"Rear bumper dent\",\n  \"claimDate\": \"2025-03-10\",\n  \"amount\": 350.00\n}"}
+      }
+    },
+    {
+      "name": "Validity - Insured",
+      "request": {"method":"GET","url": {"raw": "{{baseUrl}}/api/cars/{{carId}}/insurance-valid?date=2025-05-05", "host": ["{{baseUrl}}"], "path": ["api","cars","{{carId}}","insurance-valid"], "query": [{"key":"date","value":"2025-05-05"}]}}
+    },
+    {
+      "name": "Validity - Missing Date (Error)",
+      "request": {"method":"GET","url": {"raw": "{{baseUrl}}/api/cars/{{carId}}/insurance-valid", "host": ["{{baseUrl}}"], "path": ["api","cars","{{carId}}","insurance-valid"]}}
+    }
+  ],
+  "variable": [
+    {"key":"baseUrl","value":"http://localhost:8000"},
+    {"key":"ownerId","value":"1"},
+    {"key":"carId","value":"1"}
+  ]
+}
+```
+
+Adjust variables after creating resources, then replay dependent requests.
