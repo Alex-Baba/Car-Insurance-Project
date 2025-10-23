@@ -166,3 +166,61 @@ class InsuranceValidityQuery(BaseModel):
     @field_validator("date")
     def range_validity(cls, v: date):
         return _range(v)
+
+# ---- Pydantic output models ----
+class PolicyOut(BaseModel):
+    id: int
+    provider: str | None = None
+    startDate: date = Field(alias="start_date")
+    endDate: date = Field(alias="end_date")
+    carId: int = Field(alias="car_id")
+
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+
+class ClaimOut(BaseModel):
+    id: int
+    claimDate: date = Field(alias="claim_date")
+    description: str
+    amount: condecimal(gt=0)
+    carId: int = Field(alias="car_id")
+
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+
+# ---- Additional Pydantic output models (migration targets) ----
+class OwnerOut(BaseModel):
+    id: int
+    name: str
+    email: str | None = None
+
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+
+class CarOut(BaseModel):
+    id: int
+    vin: str
+    make: str
+    model: str
+    yearOfManufacture: int = Field(alias="year_of_manufacture")
+    ownerId: int = Field(alias="owner_id")
+    owner: OwnerOut | None = None
+
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+
+class HistoryEntryOut(BaseModel):
+    type: str  # POLICY or CLAIM
+    policyId: int | None = None
+    startDate: date | None = None
+    endDate: date | None = None
+    provider: str | None = None
+    claimId: int | None = None
+    claimDate: date | None = None
+    amount: condecimal(gt=0) | None = None
+    description: str | None = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+class InsuranceValidityOut(BaseModel):
+    carId: int
+    date: date
+    valid: bool
+
+    model_config = ConfigDict(populate_by_name=True)

@@ -1,30 +1,40 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
-from flask_pydantic import validate
-from app.api.schemas import CarSchema, CarCreate, CarUpdate
+from pydantic import ValidationError
+from app.api.schemas import CarCreate, CarUpdate, CarOut
 from app.services.car_service import list_cars, create_car, get_car, update_car, delete_car
+from app.api.errors import DomainValidationError
 
 bp = Blueprint('cars', __name__, url_prefix='/api/cars')
 
-def _to_json(c):
-    return {
-        "id": c.id,
-        "vin": c.vin,
-        "make": c.make,
-        "model": c.model,
-        "year_of_manufacture": c.year_of_manufacture,
-        "owner_id": c.owner_id
-    }
-
 @bp.route('/')
 class CarsCollection(MethodView):
-    @bp.response(200, CarSchema(many=True))
     def get(self):
-        return list_cars()
+        cars = list_cars()
+        # include owner nested if loaded
+        out = []
+        for c in cars:
+            model = CarOut.model_validate(c, from_attributes=True)
+            data = model.model_dump(by_alias=True)
+            # embed owner object manually if relationship present
+            if getattr(c, 'owner', None):
+                data['owner'] = {
+                    'id': c.owner.id,
+                    'name': c.owner.name,
+                    'email': c.owner.email
+                }
+            out.append(data)
+        return out, 200
 
-    @validate()
-    @bp.response(201, CarSchema)
-    def post(self, body: CarCreate):
+    def post(self):
+        json_data = bp.app.current_request.json if hasattr(bp.app, 'current_request') else None  # fallback for flask context
+        # use flask request
+        from flask import request
+        json_data = request.get_json() or {}
+        try:
+            body = CarCreate.model_validate(json_data)
+        except ValidationError as ve:
+            raise DomainValidationError("Invalid car payload", field="body", detail=ve.errors())
         car = create_car(
             body.vin,
             body.make,
@@ -32,17 +42,37 @@ class CarsCollection(MethodView):
             body.year_of_manufacture,
             body.owner_id
         )
-        return car
+        model = CarOut.model_validate(car, from_attributes=True)
+        data = model.model_dump(by_alias=True)
+        if getattr(car, 'owner', None):
+            data['owner'] = {
+                'id': car.owner.id,
+                'name': car.owner.name,
+                'email': car.owner.email
+            }
+        return data, 201
 
 @bp.route('/<int:car_id>')
 class CarItem(MethodView):
-    @bp.response(200, CarSchema)
     def get(self, car_id):
-        return get_car(car_id)
+        car = get_car(car_id)
+        model = CarOut.model_validate(car, from_attributes=True)
+        data = model.model_dump(by_alias=True)
+        if getattr(car, 'owner', None):
+            data['owner'] = {
+                'id': car.owner.id,
+                'name': car.owner.name,
+                'email': car.owner.email
+            }
+        return data, 200
 
-    @validate()
-    @bp.response(200, CarSchema)
-    def put(self, car_id, body: CarUpdate):
+    def put(self, car_id):
+        from flask import request
+        json_data = request.get_json() or {}
+        try:
+            body = CarUpdate.model_validate(json_data)
+        except ValidationError as ve:
+            raise DomainValidationError("Invalid car update", field="body", detail=ve.errors())
         car = update_car(
             car_id,
             vin=body.vin,
@@ -50,9 +80,16 @@ class CarItem(MethodView):
             model=body.model,
             year_of_manufacture=body.year_of_manufacture
         )
-        return car
+        model = CarOut.model_validate(car, from_attributes=True)
+        data = model.model_dump(by_alias=True)
+        if getattr(car, 'owner', None):
+            data['owner'] = {
+                'id': car.owner.id,
+                'name': car.owner.name,
+                'email': car.owner.email
+            }
+        return data, 200
 
-    @bp.response(204)
     def delete(self, car_id):
         delete_car(car_id)
-        return ""
+        return "", 204

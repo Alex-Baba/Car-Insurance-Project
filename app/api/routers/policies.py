@@ -2,19 +2,14 @@ from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask import request
 from app.db.models import InsurancePolicy
-from app.api.schemas import PolicyCreate, PolicyUpdate
+from app.api.schemas import PolicyCreate, PolicyUpdate, PolicyOut
 from app.services.policies_service import list_policies, create_policy, update_policy, get_policy
 
 policies_bp = Blueprint('policies', __name__, url_prefix='/api/cars/policies')
 
 def _to_json(p: InsurancePolicy):
-    return {
-        "id": p.id,
-        "provider": p.provider,
-        "startDate": p.start_date.isoformat(),
-        "endDate": p.end_date.isoformat(),
-        "carId": p.car_id
-    }
+    # Dump without aliases so camelCase field names (id, provider, startDate, endDate, carId) are returned
+    return PolicyOut.model_validate(p).model_dump(by_alias=False)
 
 @policies_bp.route('/')
 class InsurancePolicyAPI(MethodView):

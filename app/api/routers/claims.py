@@ -2,17 +2,11 @@ from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask import request
-from app.api.schemas import ClaimCreate, ClaimsSchema
+from app.api.schemas import ClaimCreate, ClaimsSchema, ClaimOut
 from app.services.claim_service import list_claims, create_claim
 
 def _to_json(c):
-    return {
-        "id": c.id,
-        "claimDate": c.claim_date.isoformat(),
-        "description": c.description,
-        "amount": str(c.amount),
-        "carId": c.car_id
-    }
+    return ClaimOut.model_validate(c).model_dump(by_alias=False)
 
 claims_bp = Blueprint('claims', __name__, url_prefix='/api/claims')
 
