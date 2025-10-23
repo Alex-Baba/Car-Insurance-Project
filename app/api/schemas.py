@@ -21,15 +21,16 @@ class CarCreate(BaseModel):
     vin: str
     make: str
     model: str
-    year_of_manufacture: int
-    owner_id: int
+    year_of_manufacture: int = Field(alias="yearOfManufacture")
+    owner_id: int = Field(alias="ownerId")
 
 class CarUpdate(BaseModel):
     model_config = ConfigDict(strict=False, populate_by_name=True)
     vin: str | None = None
     make: str | None = None
     model: str | None = None
-    year_of_manufacture: int | None = None
+    year_of_manufacture: int | None = Field(default=None, alias="yearOfManufacture")
+    owner_id: int | None = Field(default=None, alias="ownerId")
 
 class PolicyCreate(BaseModel):
     model_config = ConfigDict(strict=False, populate_by_name=True)
@@ -140,6 +141,7 @@ class HistoryEntryOut(BaseModel):
     claimDate: str | None = None
     amount: condecimal(gt=0) | None = None
     description: str | None = None
+    date: str | None = None
 
     model_config = ConfigDict(populate_by_name=True)
 

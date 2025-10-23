@@ -1,25 +1,35 @@
 from app.db.base import datab as db
 from app.db.models import Car, Owner
-from app.api.errors import NotFoundError
+from app.api.errors import NotFoundError, ConflictError
+from sqlalchemy.exc import IntegrityError
 
 def list_cars():
     """Return all cars (no pagination yet)."""
     return Car.query.all()
 
-def create_car(vin, make, model, year_of_manufacture, owner_id):
-    """Create a new car ensuring the referenced owner exists."""
+def create_car(data: dict):
+    """Create a new car ensuring the referenced owner exists.
+
+    Expects dict with keys vin, make, model, year_of_manufacture, owner_id.
+    Raises NotFoundError if owner missing; ConflictError if VIN duplicate.
+    """
+    owner_id = data.get("owner_id")
     owner = db.session.get(Owner, owner_id)
     if not owner:
         raise NotFoundError("Owner not found")
     car = Car(
-        vin=vin,
-        make=make,
-        model=model,
-        year_of_manufacture=year_of_manufacture,
+        vin=data.get("vin"),
+        make=data.get("make"),
+        model=data.get("model"),
+        year_of_manufacture=data.get("year_of_manufacture"),
         owner_id=owner_id
     )
     db.session.add(car)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise ConflictError("VIN already exists")
     return car
 
 def get_car(car_id):

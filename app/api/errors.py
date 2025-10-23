@@ -14,10 +14,14 @@ class ConflictError(Exception):
         self.message = message
 
 class DomainValidationError(Exception):
-    """Business rule / domain validation error (e.g., endDate < startDate, overlap)."""
-    def __init__(self, message: str, field: str | None = None):
+    """Business rule / domain validation error (e.g., endDate < startDate, overlap).
+
+    Optionally carries detail (list/dict) for richer error reporting.
+    """
+    def __init__(self, message: str, field: str | None = None, detail=None):
         self.message = message
         self.field = field
+        self.detail = detail
 
 def _problem_response(status, title, detail=None, errors=None):
     """Build a RFC-7807-style problem response body."""
@@ -72,6 +76,8 @@ def register_error_handlers(app):
     @app.errorhandler(DomainValidationError)
     def handle_domain_validation(err: DomainValidationError):
         errors = {err.field: [err.message]} if err.field else {"detail": [err.message]}
+        if err.detail:
+            errors["detail_info"] = err.detail
         return _problem_response(400, "Domain Validation Error", detail=err.message, errors=errors)
 
     @app.errorhandler(Exception)

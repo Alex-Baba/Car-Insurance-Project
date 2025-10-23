@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from app.api.schemas import CarCreate, CarUpdate, CarOut
 from app.services.car_service import list_cars, create_car, get_car, update_car, delete_car
 from app.api.errors import DomainValidationError
+from app.core.logging import get_logger
 
 bp = Blueprint('cars', __name__, url_prefix='/api/cars', description='Cars resource: manage vehicles linked to owners; cascade delete related policies and claims.')
 
@@ -30,30 +31,41 @@ class CarsCollection(MethodView):
 
     def post(self):
         """Validate request body and create a new car, returning the created resource."""
-        json_data = bp.app.current_request.json if hasattr(bp.app, 'current_request') else None  # fallback for flask context
-        # use flask request
         from flask import request
-        json_data = request.get_json() or {}
+        json_data = request.get_json(silent=True) or {}
+        logger = get_logger()
+        logger.info("car.create.request", payload=json_data)
         try:
             body = CarCreate.model_validate(json_data)
         except ValidationError as ve:
+            logger.warning("car.create.validation_error", errors=ve.errors())
             raise DomainValidationError("Invalid car payload", field="body", detail=ve.errors())
-        car = create_car(
-            body.vin,
-            body.make,
-            body.model,
-            body.year_of_manufacture,
-            body.owner_id
-        )
+        car = create_car({
+            "vin": body.vin,
+            "make": body.make,
+            "model": body.model,
+            "year_of_manufacture": body.year_of_manufacture,
+            "owner_id": body.owner_id
+        })
         model = CarOut.model_validate(car, from_attributes=True)
         data = model.model_dump(by_alias=True)
+        # Ensure camelCase keys for output consistency
+        if 'year_of_manufacture' in data and 'yearOfManufacture' not in data:
+            data['yearOfManufacture'] = data.pop('year_of_manufacture')
+        if 'owner_id' in data and 'ownerId' not in data:
+            data['ownerId'] = data.pop('owner_id')
         if getattr(car, 'owner', None):
             data['owner'] = {
                 'id': car.owner.id,
                 'name': car.owner.name,
                 'email': car.owner.email
             }
-        return data, 201
+        logger.info("car.create.success", car_id=car.id)
+        from flask import jsonify
+        resp = jsonify(data)
+        resp.status_code = 201
+        resp.headers['Location'] = f"/api/cars/{car.id}"
+        return resp
 
 @bp.route('/<int:car_id>')
 class CarItem(MethodView):
@@ -63,6 +75,10 @@ class CarItem(MethodView):
         car = get_car(car_id)
         model = CarOut.model_validate(car, from_attributes=True)
         data = model.model_dump(by_alias=True)
+        if 'year_of_manufacture' in data and 'yearOfManufacture' not in data:
+            data['yearOfManufacture'] = data.pop('year_of_manufacture')
+        if 'owner_id' in data and 'ownerId' not in data:
+            data['ownerId'] = data.pop('owner_id')
         if getattr(car, 'owner', None):
             data['owner'] = {
                 'id': car.owner.id,

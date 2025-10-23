@@ -1,5 +1,6 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
+from flask import request
 from app.services.history_service import car_history
 from app.api.schemas import HistoryEntryOut
 
@@ -10,7 +11,12 @@ class CarHistoryResource(MethodView):
     """Retrieve chronological policy/claim history for a single car."""
     def get(self, car_id):
         """Return sorted merged entries (ISO date strings)."""
-        entries = car_history(car_id)
-        # entries are dicts already; validate each through pydantic for consistency
+        fmt = request.args.get("format")
+        compact = fmt == "compact"
+        entries = car_history(car_id, compact=compact)
+        if compact:
+            # Compact entries already pruned; return as-is
+            return entries, 200
+        # Normal (full) format: validate via pydantic to ensure schema consistency
         validated = [HistoryEntryOut.model_validate(e).model_dump(by_alias=True) for e in entries]
         return validated, 200
