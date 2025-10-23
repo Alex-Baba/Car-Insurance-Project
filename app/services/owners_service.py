@@ -12,7 +12,7 @@ def create_owner(data: dict):
     return owner
 
 def get_owner(owner_id: int):
-    owner = Owner.query.get(owner_id)
+    owner = db.session.get(Owner, owner_id)
     if not owner:
         raise NotFoundError("Owner not found")
     return owner
