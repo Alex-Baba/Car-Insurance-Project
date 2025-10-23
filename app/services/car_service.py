@@ -3,9 +3,11 @@ from app.db.models import Car, Owner
 from app.api.errors import NotFoundError
 
 def list_cars():
+    """Return all cars (no pagination yet)."""
     return Car.query.all()
 
 def create_car(vin, make, model, year_of_manufacture, owner_id):
+    """Create a new car ensuring the referenced owner exists."""
     owner = db.session.get(Owner, owner_id)
     if not owner:
         raise NotFoundError("Owner not found")
@@ -21,12 +23,14 @@ def create_car(vin, make, model, year_of_manufacture, owner_id):
     return car
 
 def get_car(car_id):
+    """Fetch a car by id or raise NotFoundError."""
     car = db.session.get(Car, car_id)
     if not car:
         raise NotFoundError("Car not found")
     return car
 
 def update_car(car_id, **fields):
+    """Update provided (non-None) fields of a car."""
     car = get_car(car_id)
     for k, v in fields.items():
         if v is not None:
@@ -35,6 +39,7 @@ def update_car(car_id, **fields):
     return car
 
 def delete_car(car_id):
+    """Delete a car and cascade related policies/claims due to model relationship settings."""
     car = get_car(car_id)
     db.session.delete(car)
     db.session.commit()

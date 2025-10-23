@@ -17,7 +17,9 @@ def setup_logging():
     log_file = os.getenv("LOG_FILE", "app.log")
     max_bytes = int(os.getenv("LOG_MAX_BYTES", "1048576"))
     backup_count = int(os.getenv("LOG_BACKUP_COUNT", "5"))
-    log_to_file = os.getenv("LOG_TO_FILE", "1") == "1"
+    # In container we default to console logging unless explicitly enabled AND not in docker env.
+    log_to_file_env = os.getenv("LOG_TO_FILE", "0") == "1"
+    log_to_file = log_to_file_env and env not in {"docker"}
 
     root = logging.getLogger()
     if not root.handlers:
@@ -26,9 +28,21 @@ def setup_logging():
         console.setFormatter(logging.Formatter("%(message)s"))
         root.addHandler(console)
         if log_to_file:
-            fh = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
-            fh.setFormatter(logging.Formatter("%(message)s"))
-            root.addHandler(fh)
+            # Ensure writable path (create directory if specified like logs/app.log)
+            log_dir = os.path.dirname(log_file)
+            if log_dir and not os.path.exists(log_dir):
+                try:
+                    os.makedirs(log_dir, exist_ok=True)
+                except Exception:
+                    # Fallback to console only if we cannot create directory
+                    return
+            try:
+                fh = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
+                fh.setFormatter(logging.Formatter("%(message)s"))
+                root.addHandler(fh)
+            except PermissionError:
+                # Ignore file handler if path unwritable in container
+                pass
 
     shared = [
         structlog.contextvars.merge_contextvars,        # if contextvars used

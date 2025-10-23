@@ -11,7 +11,7 @@ async def test_create_policy_success(async_client, car_factory):
         "startDate": date.today().isoformat(),
         "endDate": date.today().isoformat()
     }
-    r = await async_client.post("/api/cars/policies/", json=payload)
+    r = await async_client.post("/api/policies", json=payload)
     assert r.status_code == 201
     assert r.json()["carId"] == car.id
 
@@ -23,7 +23,7 @@ async def test_create_policy_missing_end_date(async_client, car_factory):
         "provider": "ACME",
         "startDate": date.today().isoformat()
     }
-    r = await async_client.post("/api/cars/policies/", json=payload)
+    r = await async_client.post("/api/policies", json=payload)
     assert r.status_code in (400, 422)
 
 @pytest.mark.asyncio
@@ -35,5 +35,5 @@ async def test_create_policy_null_end_date(async_client, car_factory):
         "startDate": date.today().isoformat(),
         "endDate": None
     }
-    r = await async_client.post("/api/cars/policies/", json=payload)
+    r = await async_client.post("/api/policies", json=payload)
     assert r.status_code in (400, 422)

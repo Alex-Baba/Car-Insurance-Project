@@ -1,3 +1,8 @@
+"""Cars API endpoints.
+
+Provides CRUD operations for cars. Uses Pydantic models for request validation
+and manual embedding of owner data (relationship) in responses.
+"""
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from pydantic import ValidationError
@@ -9,7 +14,9 @@ bp = Blueprint('cars', __name__, url_prefix='/api/cars')
 
 @bp.route('/')
 class CarsCollection(MethodView):
+    """Collection resource for listing and creating cars."""
     def get(self):
+        """Return all cars with embedded owner info (if loaded)."""
         cars = list_cars()
         # include owner nested if loaded
         out = []
@@ -27,6 +34,7 @@ class CarsCollection(MethodView):
         return out, 200
 
     def post(self):
+        """Validate request body and create a new car, returning the created resource."""
         json_data = bp.app.current_request.json if hasattr(bp.app, 'current_request') else None  # fallback for flask context
         # use flask request
         from flask import request
@@ -54,7 +62,9 @@ class CarsCollection(MethodView):
 
 @bp.route('/<int:car_id>')
 class CarItem(MethodView):
+    """Item resource for retrieving, updating and deleting a specific car."""
     def get(self, car_id):
+        """Fetch a single car by id."""
         car = get_car(car_id)
         model = CarOut.model_validate(car, from_attributes=True)
         data = model.model_dump(by_alias=True)
@@ -67,6 +77,7 @@ class CarItem(MethodView):
         return data, 200
 
     def put(self, car_id):
+        """Update mutable car fields; ignores None values."""
         from flask import request
         json_data = request.get_json() or {}
         try:
@@ -91,5 +102,6 @@ class CarItem(MethodView):
         return data, 200
 
     def delete(self, car_id):
+        """Delete the car (cascades to policies/claims via ORM configuration)."""
         delete_car(car_id)
         return "", 204

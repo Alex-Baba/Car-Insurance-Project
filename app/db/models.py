@@ -1,3 +1,8 @@
+"""SQLAlchemy ORM models for the Car Insurance domain.
+
+Defines Owner, Car, InsurancePolicy, and Claim with relationships and indexes.
+Cascade rules on Car ensure dependent policies and claims are removed on delete.
+"""
 from __future__ import annotations
 from app.db.base import datab as db
 from datetime import date, datetime
@@ -15,6 +20,7 @@ def _check_range(d: date):
     return d
 
 class Owner(db.Model):
+    """Person who owns one or more cars."""
     __tablename__ = "owner"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -23,6 +29,7 @@ class Owner(db.Model):
     cars: Mapped[List["Car"]] = relationship(back_populates="owner")
 
 class Car(db.Model):
+    """Vehicle entity; related policies and claims cascade on deletion."""
     __tablename__ = "car"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     vin: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
@@ -36,6 +43,7 @@ class Car(db.Model):
     claims: Mapped[List["Claim"]] = relationship(back_populates="car", cascade="all, delete-orphan")
 
 class InsurancePolicy(db.Model):
+    """Insurance coverage period for a car (start/end inclusive)."""
     __tablename__ = "insurance_policy"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     car_id: Mapped[int] = mapped_column(ForeignKey("car.id"), nullable=False, index=True)
@@ -53,6 +61,7 @@ class InsurancePolicy(db.Model):
     )
 
 class Claim(db.Model):
+    """Insurance claim filed against a car's active or past policy."""
     __tablename__ = "claim"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     car_id: Mapped[int] = mapped_column(ForeignKey("car.id"), nullable=False, index=True)

@@ -1,7 +1,7 @@
 import pytest
 from datetime import date
 
-POLICY_URL = "/api/cars/policies/"
+POLICY_URL = "/api/policies"
 CLAIM_URL = "/api/claims/"
 CARS_URL = "/api/cars/"
 

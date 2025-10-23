@@ -1,3 +1,7 @@
+"""Insurance validity check endpoint.
+
+Determines if a car has an active policy covering a supplied date.
+"""
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask import request
@@ -10,7 +14,9 @@ insurance_validation_bp = Blueprint('insurance_validation', __name__, url_prefix
 
 @insurance_validation_bp.route('/<int:car_id>/insurance-valid')
 class InsuranceValidResource(MethodView):
+    """GET resource for validating insurance coverage on a given date."""
     def get(self, car_id):
+        """Validate query date parameter and respond with validity boolean."""
         date_str = request.args.get("date")
         if not date_str:
             raise DomainValidationError("Missing query parameter 'date'", field="date")

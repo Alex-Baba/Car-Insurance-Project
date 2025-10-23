@@ -4,20 +4,23 @@ from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
 
 class NotFoundError(Exception):
+    """Raised when an entity lookup fails."""
     def __init__(self, message="Resource not found"):
         self.message = message
 
 class ConflictError(Exception):
+    """Raised when a conflicting resource state is encountered (e.g. uniqueness)."""
     def __init__(self, message="Conflict"):
         self.message = message
 
 class DomainValidationError(Exception):
-    """Business rule / domain validation error (e.g., endDate < startDate)."""
+    """Business rule / domain validation error (e.g., endDate < startDate, overlap)."""
     def __init__(self, message: str, field: str | None = None):
         self.message = message
         self.field = field
 
 def _problem_response(status, title, detail=None, errors=None):
+    """Build a RFC-7807-style problem response body."""
     body = {"status": status, "title": title}
     if detail:
         body["detail"] = detail
@@ -26,9 +29,11 @@ def _problem_response(status, title, detail=None, errors=None):
     return body, status
 
 def validation_problem(errors: dict, detail: str | None = None, status: int = 422):
+    """Helper for constructing validation error payloads."""
     return _problem_response(status, "Validation Error", detail=detail, errors=errors)
 
 def _pydantic_errors(e: PydanticValidationError):
+    """Group pydantic errors by their location path."""
     grouped = {}
     for err in e.errors():
         loc = ".".join(str(x) for x in err.get("loc", []))
@@ -37,6 +42,7 @@ def _pydantic_errors(e: PydanticValidationError):
     return grouped
 
 def register_error_handlers(app):
+    """Attach Flask error handlers mapping exceptions to standardized responses."""
 
     @app.errorhandler(PydanticValidationError)
     def handle_pydantic(err):

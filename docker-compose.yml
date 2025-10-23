@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: insurance_db
+    environment:
+      POSTGRES_USER: insurance
+      POSTGRES_PASSWORD: insurance
+      POSTGRES_DB: insurance
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "insurance"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: insurance_app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: docker
+      DATABASE_URL: postgresql+psycopg2://insurance:insurance@db:5432/insurance
+      LOG_LEVEL: INFO
+      SCHEDULER_ENABLED: "false"
+      LOG_TO_FILE: "0"
+    ports:
+      - "8000:8000"
+    command: ["/app/entrypoint.sh"]
+    volumes:
+      - .:/workspace:ro
+
+volumes:
+  db_data:

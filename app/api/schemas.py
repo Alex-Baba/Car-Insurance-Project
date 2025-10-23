@@ -133,11 +133,11 @@ class CarOut(BaseModel):
 class HistoryEntryOut(BaseModel):
     type: str  # POLICY or CLAIM
     policyId: int | None = None
-    startDate: date | None = None
-    endDate: date | None = None
+    startDate: str | None = None
+    endDate: str | None = None
     provider: str | None = None
     claimId: int | None = None
-    claimDate: date | None = None
+    claimDate: str | None = None
     amount: condecimal(gt=0) | None = None
     description: str | None = None
 

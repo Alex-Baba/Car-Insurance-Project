@@ -15,7 +15,7 @@ async def test_policy_end_date_before_start(async_client, car_factory):
     # If startDate == endDate due to day==1, fudge by subtracting one day via a fixed earlier date
     if payload["startDate"] == payload["endDate"]:
         payload["endDate"] = "1899-12-31"  # guaranteed before start
-    r = await async_client.post("/api/cars/policies/", json=payload)
+    r = await async_client.post("/api/policies", json=payload)
     assert r.status_code in (400, 422)
 
 @pytest.mark.asyncio
@@ -27,5 +27,5 @@ async def test_policy_date_out_of_range(async_client, car_factory):
         "startDate": "1899-01-01",
         "endDate": "1899-12-31"
     }
-    r = await async_client.post("/api/cars/policies/", json=payload)
+    r = await async_client.post("/api/policies", json=payload)
     assert r.status_code in (400, 422)
