@@ -28,7 +28,9 @@ async def test_car_delete_cascade(async_client, car_factory):
     assert cr.status_code == 201
     # Delete car
     dr = await async_client.delete(f"{CARS_URL}{car.id}")
-    assert dr.status_code == 204
+    assert dr.status_code == 200
+    msg = dr.json()
+    assert msg.get("status") == 200 and msg.get("title") == "Deleted" and f"Car {car.id}" in msg.get("detail", "")
     # Policies list should not include policy
     list_policies = await async_client.get(POLICY_URL)
     assert all(p["carId"] != car.id for p in list_policies.json())

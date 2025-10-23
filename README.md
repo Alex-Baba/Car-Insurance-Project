@@ -136,25 +136,25 @@ Below are the primary RESTful resource endpoints. New nested & item endpoints we
 | GET | /api/cars | 200 | List cars |
 | POST | /api/cars | 201 + Location | Create car |
 | GET | /api/cars/<car_id> | 200 / 404 | Retrieve single car |
-| DELETE | /api/cars/<car_id> | 204 / 404 | Delete car (cascade policies & claims) |
+| DELETE | /api/cars/<car_id> | 200 / 404 | Delete car (cascade policies & claims) |
 | GET | /api/cars/<car_id>/policies | 200 | List policies for a car (preferred) |
 | POST | /api/cars/<car_id>/policies | 201 + Location / 409 | Create policy for car (overlap validation) |
 | GET | /api/policies (legacy) | 200 | List all policies (will be deprecated) |
 | GET | /api/policies/<policy_id> | 200 / 404 | Retrieve policy |
 | PUT | /api/policies/<policy_id> | 200 / 404 / 409 | Update policy (overlap validation) |
-| DELETE | /api/policies/<policy_id> | 204 / 404 | Delete policy (removes only that policy) |
+| DELETE | /api/policies/<policy_id> | 200 / 404 | Delete policy (removes only that policy) |
 | GET | /api/claims (legacy) | 200 | List all claims (will be deprecated) |
 | GET | /api/claims/car/<car_id> | 200 | List claims for a car (preferred) |
 | POST | /api/claims/car/<car_id> | 201 + Location / 404 | Create claim for a car |
 | GET | /api/claims/<claim_id> | 200 / 404 | Retrieve claim |
-| DELETE | /api/claims/<claim_id> | 204 / 404 | Delete claim (irreversible) |
+| DELETE | /api/claims/<claim_id> | 200 / 404 | Delete claim (irreversible) |
 | GET | /api/history/<car_id> | 200 / 404 | Chronological history (policies + claims) |
 | GET | /api/cars/<car_id>/history (planned) | 200 / 404 | Nested history endpoint (will replace /api/history/<car_id>) |
 | GET | /api/cars/<car_id>/insurance-valid | 200 / 404 | Insurance validity for a car/date |
 
 Notes:
 1. 201 responses include a Location header pointing to the newly created resource (e.g. /api/policies/<id>). Cars & owners will gain Location headers shortly.
-2. 204 DELETE responses return no body.
+2. DELETE responses return a JSON confirmation body (status, title, detail) with 200.
 3. Overlap conflicts for policies return 409 with a structured error payload.
 4. Legacy endpoints will emit deprecation warnings in a future release before removal.
 5. DELETE endpoints for policies and claims are implemented as shown; ensure you target the item resource path with the numeric ID.
@@ -468,6 +468,18 @@ Non-existent Car History (404):
 ```http
 GET /api/history/999999
 ```
+Compact History (200):
+```http
+GET /api/history/1?format=compact
+```
+Example (compact):
+```json
+[
+  { "type": "POLICY", "policyId": 12, "startDate": "2025-01-01", "endDate": "2025-06-30", "provider": "ACME", "date": "2025-01-01" },
+  { "type": "CLAIM", "claimId": 7, "claimDate": "2025-03-10", "description": "Rear bumper dent", "amount": 350.0, "date": "2025-03-10" }
+]
+```
+Notes: In compact format each entry includes a unified `date` field and omits unrelated or null keys (policy fields stripped from claims and vice versa). Omit the query parameter (or any other value) for full format.
 
 ### Insurance Validity
 Insured Date (200):
@@ -484,15 +496,15 @@ GET /api/cars/1/insurance-valid
 ```
 
 ### Deletions
-Delete Policy (204):
+Delete Policy (200):
 ```http
 DELETE /api/policies/<policy_id>
 ```
-Delete Claim (204):
+Delete Claim (200):
 ```http
 DELETE /api/claims/<claim_id>
 ```
-Cascade Delete Car (204):
+Cascade Delete Car (200):
 ```http
 DELETE /api/cars/1
 ```

@@ -112,4 +112,4 @@ class InsurancePolicyItem(MethodView):
         p = get_policy(policy_id)
         db.session.delete(p)
         db.session.commit()
-        return "", 204
+        return {"status": 200, "title": "Deleted", "detail": f"Policy {policy_id} deleted"}, 200

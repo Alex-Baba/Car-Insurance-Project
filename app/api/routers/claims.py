@@ -48,7 +48,7 @@ class ClaimItem(MethodView):
     def delete(self, claim_id: int):
         from app.services.claim_service import delete_claim
         delete_claim(claim_id)
-        return "", 204
+        return {"status": 200, "title": "Deleted", "detail": f"Claim {claim_id} deleted"}, 200
 
 # Nested car claims collection
 @claims_bp.route('/car/<int:car_id>')

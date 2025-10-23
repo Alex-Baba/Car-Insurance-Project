@@ -115,4 +115,4 @@ class CarItem(MethodView):
     def delete(self, car_id):
         """Delete the car (cascades to policies/claims via ORM configuration)."""
         delete_car(car_id)
-        return "", 204
+        return {"status": 200, "title": "Deleted", "detail": f"Car {car_id} deleted"}, 200
